@@ -13,8 +13,10 @@ interface Project {
 }
 
 interface ChatMessage {
+  id?: string
   role: 'user' | 'assistant'
   content: string
+  created_at?: string
 }
 
 const STEPS = ['Brief', 'Research', 'Concept', 'Develop', 'Deliver']
@@ -35,18 +37,24 @@ export default function ProjectPage() {
   const [chatLoading, setChatLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  // Load project
+  // Load project + chat history in parallel
   useEffect(() => {
     if (!id) return
-    fetch(`/api/projects/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Not found')
-        return res.json()
-      })
-      .then((data: Project) => {
-        setProject(data)
-        setTitle(data.title === 'Untitled' ? '' : data.title)
-        setDescription(data.description ?? '')
+
+    Promise.all([
+      fetch(`/api/projects/${id}`).then((r) => {
+        if (!r.ok) throw new Error('Not found')
+        return r.json() as Promise<Project>
+      }),
+      fetch(`/api/projects/${id}/messages`).then((r) =>
+        r.ok ? (r.json() as Promise<ChatMessage[]>) : []
+      ),
+    ])
+      .then(([projectData, history]) => {
+        setProject(projectData)
+        setTitle(projectData.title === 'Untitled' ? '' : projectData.title)
+        setDescription(projectData.description ?? '')
+        setMessages(history)
       })
       .catch(() => navigate('/'))
   }, [id, navigate])
@@ -79,27 +87,30 @@ export default function ProjectPage() {
     const text = input.trim()
     if (!text || chatLoading) return
 
-    const userMsg: ChatMessage = { role: 'user', content: text }
-    setMessages((prev) => [...prev, userMsg])
+    // Optimistically show the user message immediately
+    const optimisticUser: ChatMessage = { role: 'user', content: text }
+    setMessages((prev) => [...prev, optimisticUser])
     setInput('')
     setChatLoading(true)
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(`/api/projects/${id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: id,
-          messages: [...messages, userMsg],
-        }),
+        body: JSON.stringify({ content: text }),
       })
       if (!res.ok) throw new Error('Chat failed')
       const data = await res.json()
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }])
+      // Replace the optimistic user message with the persisted one, then add assistant reply
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        data.user_message,
+        data.assistant_message,
+      ])
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
+        { role: 'assistant' as const, content: 'Sorry, something went wrong. Please try again.' },
       ])
     } finally {
       setChatLoading(false)
