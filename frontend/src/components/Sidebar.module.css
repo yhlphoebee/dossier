@@ -1,0 +1,193 @@
+.sidebar {
+  width: 518px;
+  min-width: 518px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--color-nav-bg);
+  position: relative;
+}
+
+.top {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ── Logo ── */
+.logo {
+  font-family: var(--font-display);
+  font-size: 138px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--color-black);
+  padding: 22px 17px 0;
+  letter-spacing: -2px;
+}
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background-color: var(--color-divider);
+  margin: 0 24px;
+}
+
+/* ── Search ── */
+.searchRow {
+  padding: 24px 24px 20px;
+}
+
+.searchInput {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ── Sort ── */
+.sortRow {
+  display: flex;
+  gap: 0;
+  padding: 22px 24px;
+  align-items: center;
+}
+
+.sortBtn {
+  font-family: var(--font-body);
+  font-size: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 52px;
+  transition: color 0.15s;
+}
+
+.sortBtn:last-child {
+  margin-right: 0;
+}
+
+.sortActive {
+  font-weight: 600;
+  color: #424242;
+}
+
+.sortInactive {
+  font-weight: 400;
+  color: var(--color-text-sort-inactive);
+}
+
+/* ── Filter toggles ── */
+.filterList {
+  display: flex;
+  flex-direction: column;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px;
+}
+
+.filterLabel {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+}
+
+/* ── Toggle switch ── */
+.toggle {
+  width: 56px;
+  height: 30px;
+  border-radius: 15px;
+  position: relative;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.toggleOff {
+  background-color: #d9d9d9;
+}
+
+.toggleOn {
+  background-color: var(--color-accent-blue);
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-white);
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleOff .toggleThumb {
+  left: 3px;
+}
+
+.toggleOn .toggleThumb {
+  left: 29px;
+}
+
+/* ── Footer ── */
+.footer {
+  display: flex;
+  height: 109px;
+  flex-shrink: 0;
+}
+
+.footerLeft {
+  flex: 1;
+  background-color: var(--color-black);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 24px;
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatarInitials {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--color-text-primary);
+  font-weight: 400;
+}
+
+.userName {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--color-white);
+  font-weight: 400;
+}
+
+.footerAccent {
+  width: 111px;
+  background-color: var(--color-accent-cyan);
+  flex-shrink: 0;
+}

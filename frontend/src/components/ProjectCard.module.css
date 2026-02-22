@@ -1,0 +1,103 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  gap: 12px;
+}
+
+.card:hover .thumbnail {
+  opacity: 0.9;
+}
+
+/* ── Thumbnail area ── */
+.thumbnail {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: var(--color-card-bg);
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.thumbnailInner {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* White circle in the center */
+.circle {
+  position: absolute;
+  width: 85%;
+  height: 85%;
+  border-radius: 50%;
+  background-color: var(--color-white);
+}
+
+.thumbnailImg {
+  position: absolute;
+  width: 65%;
+  height: 65%;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.thumbnailPlaceholder {
+  /* empty placeholder when no image */
+}
+
+/* ── Bar markers (decorative vertical bars from Figma) ── */
+.topMarkers,
+.bottomMarkers {
+  display: flex;
+  gap: 5px;
+  padding: 12px 14px;
+  flex-shrink: 0;
+}
+
+.bottomMarkers {
+  justify-content: flex-end;
+}
+
+.markerTop {
+  width: 5px;
+  height: 20px;
+  background-color: var(--color-accent-blue);
+  border-radius: 2px;
+}
+
+.markerBottom {
+  width: 5px;
+  height: 48px;
+  background-color: var(--color-accent-blue);
+  border-radius: 2px;
+}
+
+/* ── Info below card ── */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--color-black);
+  line-height: normal;
+}
+
+.date {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: #bcbcbc;
+  line-height: normal;
+}
