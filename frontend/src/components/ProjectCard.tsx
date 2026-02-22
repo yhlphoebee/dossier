@@ -33,21 +33,21 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
     >
       <div className={styles.thumbnail}>
-        {/* Top bar markers */}
-        <div className={styles.topMarkers}>
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className={styles.markerTop} />
-          ))}
-        </div>
-
-        {/* Circle + graphic element */}
-        <div className={styles.thumbnailInner}>
+        {/* Full-bleed layer: circle + graphic sized to full thumbnail (Figma: 400/432, 280/432) */}
+        <div className={styles.thumbnailFill}>
           <div className={styles.circle} />
           <img
             src={graphicSrc}
             alt={project.title}
             className={styles.thumbnailImg}
           />
+        </div>
+
+        {/* Top bar markers */}
+        <div className={styles.topMarkers}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className={styles.markerTop} />
+          ))}
         </div>
 
         {/* Bottom bar markers */}

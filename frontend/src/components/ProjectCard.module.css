@@ -23,45 +23,57 @@
   transition: opacity 0.15s;
 }
 
-.thumbnailInner {
-  flex: 1;
-  position: relative;
+/* Full-bleed layer so circle/graphic are sized from the full thumbnail (Figma 432×432) */
+.thumbnailFill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* White circle in the center */
+/* White circle — Figma: 400×400 in 432×432 ≈ 92.6% */
 .circle {
   position: absolute;
-  width: 85%;
-  height: 85%;
+  width: 92.6%;
+  height: 92.6%;
+  aspect-ratio: 1;
+  inset: 0;
+  margin: auto;
   border-radius: 50%;
   background-color: var(--color-white);
 }
 
+/* Graphic — Figma: 280×280 in 432×432 ≈ 64.8% */
 .thumbnailImg {
   position: absolute;
-  width: 65%;
-  height: 65%;
+  width: 80.8%;
+  height: 80.8%;
+  aspect-ratio: 1;
+  inset: 0;
+  margin: auto;
   object-fit: contain;
   z-index: 1;
 }
 
-.thumbnailPlaceholder {
-  /* empty placeholder when no image */
-}
+/* .thumbnailPlaceholder — reserved when no image */
 
 /* ── Bar markers (decorative vertical bars from Figma) ── */
 .topMarkers,
 .bottomMarkers {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 5px;
   padding: 12px 14px;
   flex-shrink: 0;
+  align-self: flex-start;
+  width: auto;
 }
 
 .bottomMarkers {
+  align-self: flex-end;
   justify-content: flex-end;
 }
 
