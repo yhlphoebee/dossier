@@ -1,0 +1,51 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-bg: #fbfafa;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-nav-bg: #fbfafa;
+  --color-footer-bg: #000000;
+  --color-footer-accent: #8deaff;
+  --color-card-bg: #cdebf2;
+  --color-accent-blue: #0a469e;
+  --color-accent-cyan: #8deaff;
+  --color-text-primary: #222121;
+  --color-text-muted: #afafaf;
+  --color-text-inactive: #acc6cc;
+  --color-text-sort-inactive: #b5b7b7;
+  --color-divider: #e0e0e0;
+  --color-tab-indicator: #acc6cc;
+
+  --font-display: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-white);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+  font: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}

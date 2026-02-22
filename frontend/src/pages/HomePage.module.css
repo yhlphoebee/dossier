@@ -1,0 +1,109 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-white);
+}
+
+/* ── Main content area ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 0 32px;
+  padding-top: 52px;
+}
+
+/* ── Top bar: tabs + new project ── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tabs {
+  display: flex;
+  gap: 96px;
+}
+
+.tab {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: normal;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tabActive {
+  color: var(--color-text-primary);
+}
+
+.tabInactive {
+  color: var(--color-text-inactive);
+}
+
+.newProjectBtn {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--color-text-inactive);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.newProjectBtn:hover {
+  color: var(--color-text-primary);
+}
+
+/* ── Tab indicator ── */
+.tabIndicatorRow {
+  margin-top: 8px;
+}
+
+.tabIndicator {
+  height: 4px;
+  width: 123px;
+  background-color: var(--color-tab-indicator);
+  border-radius: 17px;
+  transition: margin-left 0.2s ease;
+}
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background-color: var(--color-divider);
+  margin-top: 0;
+  margin-bottom: 32px;
+}
+
+/* ── Loading ── */
+.loading {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-muted);
+  padding: 48px 0;
+}
+
+/* ── Empty state ── */
+.emptyState {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--color-text-primary);
+  opacity: 0.35;
+  padding: 80px 0;
+  user-select: none;
+}
+
+/* ── Project grid ── */
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 32px;
+  padding-bottom: 48px;
+}
