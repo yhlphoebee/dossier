@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import Sidebar, { type FilterCategory } from '../components/Sidebar'
 import ProjectCard from '../components/ProjectCard'
 import DeleteModal from '../components/DeleteModal'
 import styles from './HomePage.module.css'
@@ -15,6 +15,18 @@ export interface Project {
   thumbnail_index: number
 }
 
+const INITIAL_FILTERS: FilterCategory[] = [
+  { label: 'Visual Exploration', enabled: false },
+  { label: 'Typeface', enabled: false },
+]
+
+function titleMatchesSearch(title: string, searchQuery: string): boolean {
+  const normalizedTitle = (title || 'Untitled').toLowerCase()
+  const keywords = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  if (keywords.length === 0) return true
+  return keywords.every((kw) => normalizedTitle.includes(kw))
+}
+
 export default function HomePage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabOption>('My Project')
@@ -22,6 +34,22 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState<FilterCategory[]>(INITIAL_FILTERS)
+
+  const toggleFilter = (index: number) => {
+    setFilters((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, enabled: !f.enabled } : f))
+    )
+  }
+
+  // When both toggles are off: filter by project title (keyword search). Otherwise show all.
+  const filteredProjects = useMemo(() => {
+    const bothOff = filters.every((f) => !f.enabled)
+    if (!bothOff) return projects
+    if (!searchQuery.trim()) return projects
+    return projects.filter((p) => titleMatchesSearch(p.title, searchQuery))
+  }, [projects, searchQuery, filters])
 
   const handleNewProject = async () => {
     setCreating(true)
@@ -101,7 +129,12 @@ export default function HomePage() {
 
   return (
     <div className={styles.layout}>
-      <Sidebar />
+      <Sidebar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={filters}
+        onToggleFilter={toggleFilter}
+      />
 
       <main className={styles.main}>
         {/* Top bar */}
@@ -141,9 +174,13 @@ export default function HomePage() {
               ? 'No archived projects.'
               : 'Click New Project to Start Discovering…'}
           </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className={styles.emptyState}>
+            No projects match your search.
+          </div>
         ) : (
           <div className={styles.projectGrid}>
-            {projects.map((project) => (
+            {filteredProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
