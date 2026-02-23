@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { getGraphicElement } from '../utils/assets'
 import styles from './ProjectPage.module.css'
 
@@ -223,7 +225,13 @@ export default function ProjectPage() {
                 key={i}
                 className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant}`}
               >
-                {msg.content}
+                {msg.role === 'assistant' ? (
+                  <div className={styles.chatMarkdown}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  msg.content
+                )}
               </div>
             ))}
             {chatLoading && (

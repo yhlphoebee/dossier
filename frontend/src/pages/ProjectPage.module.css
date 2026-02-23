@@ -298,6 +298,95 @@
   border-bottom-left-radius: 4px;
 }
 
+/* Markdown in assistant bubbles – tight spacing, no extra lines */
+.chatMarkdown {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.chatMarkdown :global(p) {
+  margin: 0 0 0.4em;
+}
+
+.chatMarkdown :global(p:last-child) {
+  margin-bottom: 0;
+}
+
+.chatMarkdown :global(h1),
+.chatMarkdown :global(h2),
+.chatMarkdown :global(h3),
+.chatMarkdown :global(h4) {
+  margin: 0.9em 0 0.2em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.chatMarkdown :global(h1) { font-size: 1.35em; }
+.chatMarkdown :global(h2) { font-size: 1.2em; }
+.chatMarkdown :global(h3) { font-size: 1.1em; }
+.chatMarkdown :global(h4) { font-size: 1em; }
+
+.chatMarkdown :global(h1:first-child),
+.chatMarkdown :global(h2:first-child),
+.chatMarkdown :global(h3:first-child),
+.chatMarkdown :global(h4:first-child) {
+  margin-top: 0;
+}
+
+/* Collapse empty paragraphs that ReactMarkdown injects between headings and lists */
+.chatMarkdown :global(h1 + p:empty),
+.chatMarkdown :global(h2 + p:empty),
+.chatMarkdown :global(h3 + p:empty),
+.chatMarkdown :global(h4 + p:empty) {
+  display: none;
+}
+
+.chatMarkdown :global(h1 + p),
+.chatMarkdown :global(h2 + p),
+.chatMarkdown :global(h3 + p),
+.chatMarkdown :global(h4 + p) {
+  margin-top: 0.25em;
+}
+
+.chatMarkdown :global(ul),
+.chatMarkdown :global(ol) {
+  margin: 0;
+  padding-left: 1.5em;
+}
+
+.chatMarkdown :global(li) {
+  margin: 0;
+}
+
+.chatMarkdown :global(li > p) {
+  margin: 0;
+}
+
+.chatMarkdown :global(strong) {
+  font-weight: 600;
+}
+
+.chatMarkdown :global(code) {
+  font-size: 0.9em;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.chatMarkdown :global(pre) {
+  margin: 0.5em 0;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+}
+
+.chatMarkdown :global(pre code) {
+  padding: 0;
+  background: none;
+}
+
 /* Typing indicator */
 .chatLoading {
   display: flex;

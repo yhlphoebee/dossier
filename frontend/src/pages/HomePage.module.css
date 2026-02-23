@@ -48,6 +48,8 @@
 }
 
 .newProjectBtn {
+  grid-column: 3;
+  justify-self: end;
   font-family: var(--font-display);
   font-size: 20px;
   color: var(--color-text-inactive);
@@ -64,6 +66,7 @@
 /* ── Tab indicator ── */
 .tabIndicatorRow {
   margin-top: 8px;
+  width: 100%;
 }
 
 .tabIndicator {
