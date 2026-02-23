@@ -5,7 +5,7 @@ import ProjectCard from '../components/ProjectCard'
 import DeleteModal from '../components/DeleteModal'
 import styles from './HomePage.module.css'
 
-type TabOption = 'My Project' | 'Archive'
+type TabOption = 'My Project' | 'Archived'
 
 export interface Project {
   id: string
@@ -42,7 +42,7 @@ export default function HomePage() {
   }
 
   const fetchProjects = () => {
-    const archived = activeTab === 'Archive'
+    const archived = activeTab === 'Archived'
     setLoading(true)
     fetch(`/api/projects?archived=${archived}`)
       .then((res) => {
@@ -107,14 +107,18 @@ export default function HomePage() {
         {/* Top bar */}
         <div className={styles.topBar}>
           <div className={styles.tabs}>
-            {(['My Project', 'Archive'] as TabOption[]).map((tab) => (
-              <button
-                key={tab}
-                className={`${styles.tab} ${activeTab === tab ? styles.tabActive : styles.tabInactive}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </button>
+            {(['My Project', 'Archived'] as TabOption[]).map((tab) => (
+              <div key={tab} className={styles.tabWrapper}>
+                <button
+                  className={`${styles.tab} ${activeTab === tab ? styles.tabActive : styles.tabInactive}`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
+                <div
+                  className={`${styles.tabIndicator} ${activeTab === tab ? styles.tabIndicatorActive : ''}`}
+                />
+              </div>
             ))}
           </div>
           <button
@@ -126,14 +130,6 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Active tab indicator */}
-        <div className={styles.tabIndicatorRow}>
-          <div
-            className={styles.tabIndicator}
-            style={{ marginLeft: activeTab === 'My Project' ? 0 : '152px' }}
-          />
-        </div>
-
         <div className={styles.divider} />
 
         {/* Project grid */}
@@ -141,7 +137,7 @@ export default function HomePage() {
           <div className={styles.loading}>Loading…</div>
         ) : projects.length === 0 ? (
           <div className={styles.emptyState}>
-            {activeTab === 'Archive'
+            {activeTab === 'Archived'
               ? 'No archived projects.'
               : 'Click New Project to Start Discovering…'}
           </div>
@@ -154,7 +150,7 @@ export default function HomePage() {
                 onClick={() => navigate(`/project/${project.id}`)}
                 onDelete={() => setDeleteTarget(project)}
                 onArchive={activeTab === 'My Project' ? () => handleArchive(project) : undefined}
-                onRestore={activeTab === 'Archive' ? () => handleRestore(project) : undefined}
+                onRestore={activeTab === 'Archived' ? () => handleRestore(project) : undefined}
               />
             ))}
           </div>

@@ -17,6 +17,7 @@ function formatRelativeDate(isoString: string): string {
   if (isNaN(date.getTime())) return isoString
   const diffMs = Date.now() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return 'today' /* updated_at in future (e.g. timezone) */
   if (diffDays === 0) return 'today'
   if (diffDays === 1) return 'yesterday'
   if (diffDays < 7) return `${diffDays} days ago`
