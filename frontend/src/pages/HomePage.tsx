@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import ProjectCard from '../components/ProjectCard'
+import DeleteModal from '../components/DeleteModal'
 import styles from './HomePage.module.css'
 
 type TabOption = 'My Project' | 'Archive'
@@ -20,6 +21,7 @@ export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
 
   const handleNewProject = async () => {
     setCreating(true)
@@ -39,7 +41,7 @@ export default function HomePage() {
     }
   }
 
-  useEffect(() => {
+  const fetchProjects = () => {
     const archived = activeTab === 'Archive'
     setLoading(true)
     fetch(`/api/projects?archived=${archived}`)
@@ -50,7 +52,52 @@ export default function HomePage() {
       .then((data: Project[]) => setProjects(data))
       .catch(() => setProjects([]))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchProjects()
   }, [activeTab])
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      const res = await fetch(`/api/projects/${deleteTarget.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      setProjects((prev) => prev.filter((p) => p.id !== deleteTarget.id))
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setDeleteTarget(null)
+    }
+  }
+
+  const handleArchive = async (project: Project) => {
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: true }),
+      })
+      if (!res.ok) throw new Error('Failed to archive')
+      setProjects((prev) => prev.filter((p) => p.id !== project.id))
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleRestore = async (project: Project) => {
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: false }),
+      })
+      if (!res.ok) throw new Error('Failed to restore')
+      setProjects((prev) => prev.filter((p) => p.id !== project.id))
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   return (
     <div className={styles.layout}>
@@ -94,7 +141,9 @@ export default function HomePage() {
           <div className={styles.loading}>Loading…</div>
         ) : projects.length === 0 ? (
           <div className={styles.emptyState}>
-            Click New Project to Start Discovering…
+            {activeTab === 'Archive'
+              ? 'No archived projects.'
+              : 'Click New Project to Start Discovering…'}
           </div>
         ) : (
           <div className={styles.projectGrid}>
@@ -103,11 +152,22 @@ export default function HomePage() {
                 key={project.id}
                 project={project}
                 onClick={() => navigate(`/project/${project.id}`)}
+                onDelete={() => setDeleteTarget(project)}
+                onArchive={activeTab === 'My Project' ? () => handleArchive(project) : undefined}
+                onRestore={activeTab === 'Archive' ? () => handleRestore(project) : undefined}
               />
             ))}
           </div>
         )}
       </main>
+
+      {deleteTarget && (
+        <DeleteModal
+          projectTitle={deleteTarget.title}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   )
 }
