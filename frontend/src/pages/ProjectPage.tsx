@@ -39,6 +39,7 @@ export default function ProjectPage() {
   const [chatLoading, setChatLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
+  const titleSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const LINE_HEIGHT_PX = 18 * 1.4 // font-size * line-height
   const MAX_LINES = 8
@@ -82,6 +83,35 @@ export default function ProjectPage() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Auto-save title when user stops typing (debounced)
+  useEffect(() => {
+    if (!id || project === null) return
+    const valueToSave = title.trim() || 'Untitled'
+    if (valueToSave === project.title) return
+
+    if (titleSaveTimeoutRef.current) clearTimeout(titleSaveTimeoutRef.current)
+    titleSaveTimeoutRef.current = setTimeout(async () => {
+      titleSaveTimeoutRef.current = null
+      setSaving(true)
+      try {
+        await fetch(`/api/projects/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: valueToSave }),
+        })
+        setProject((prev) => (prev ? { ...prev, title: valueToSave } : null))
+        setSavedFeedback(true)
+        setTimeout(() => setSavedFeedback(false), 2000)
+      } finally {
+        setSaving(false)
+      }
+    }, 600)
+
+    return () => {
+      if (titleSaveTimeoutRef.current) clearTimeout(titleSaveTimeoutRef.current)
+    }
+  }, [title, id, project])
 
   const handleSave = async () => {
     if (!id) return
