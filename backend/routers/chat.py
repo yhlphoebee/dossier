@@ -1,33 +1,57 @@
 import os
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Literal
+from sqlalchemy.orm import Session
+from datetime import datetime
 from openai import AsyncOpenAI, OpenAIError
+
+from database import get_db
+from models import Project, ChatMessage
+from prompt import build_messages
 
 router = APIRouter()
 
-SYSTEM_PROMPT = """You are Dossier AI, a creative design assistant built for graphic designers and design students.
-Your role is to help users develop, research, and refine their design projects.
-Be concise, thoughtful, and encouraging. Ask clarifying questions when needed.
-Focus on design thinking, visual communication, typography, branding, and creative process."""
+
+# ── Schemas ───────────────────────────────────────────────────────────────────
+
+class MessageOut(BaseModel):
+    id: str
+    role: str
+    content: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
-class ChatMessage(BaseModel):
-    role: Literal["user", "assistant"]
+class SendMessageRequest(BaseModel):
     content: str
 
 
-class ChatRequest(BaseModel):
-    project_id: str
-    messages: list[ChatMessage]
-
-
 class ChatResponse(BaseModel):
-    reply: str
+    user_message: MessageOut
+    assistant_message: MessageOut
 
 
-@router.post("/chat", response_model=ChatResponse)
-async def chat(body: ChatRequest):
+# ── Routes ────────────────────────────────────────────────────────────────────
+
+@router.get("/projects/{project_id}/messages", response_model=list[MessageOut])
+def get_messages(project_id: str, db: Session = Depends(get_db)):
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project.messages
+
+
+@router.post("/projects/{project_id}/messages", response_model=ChatResponse)
+async def send_message(
+    project_id: str,
+    body: SendMessageRequest,
+    db: Session = Depends(get_db),
+):
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(
@@ -35,20 +59,39 @@ async def chat(body: ChatRequest):
             detail="OpenAI API key not configured. Add OPENAI_API_KEY to your .env file.",
         )
 
-    client = AsyncOpenAI(api_key=api_key)
+    # Snapshot history before saving the new message
+    history = list(project.messages)
 
+    # Save the user message
+    user_msg = ChatMessage(project_id=project_id, role="user", content=body.content)
+    db.add(user_msg)
+    db.flush()
+
+    # Build properly structured OpenAI messages (system + alternating turns + new message)
+    openai_messages = build_messages(
+        new_message=body.content,
+        project=project,
+        history=history,
+    )
+
+    client = AsyncOpenAI(api_key=api_key)
     try:
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                *[{"role": m.role, "content": m.content} for m in body.messages],
-            ],
+            messages=openai_messages,
             max_tokens=1024,
             temperature=0.7,
         )
-        reply = response.choices[0].message.content or ""
-        return ChatResponse(reply=reply)
-
+        reply_text = response.choices[0].message.content or ""
     except OpenAIError as e:
+        db.rollback()
         raise HTTPException(status_code=502, detail=str(e))
+
+    # Save the assistant reply
+    assistant_msg = ChatMessage(project_id=project_id, role="assistant", content=reply_text)
+    db.add(assistant_msg)
+    db.commit()
+    db.refresh(user_msg)
+    db.refresh(assistant_msg)
+
+    return ChatResponse(user_message=user_msg, assistant_message=assistant_msg)
