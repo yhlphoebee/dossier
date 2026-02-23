@@ -38,6 +38,23 @@ export default function ProjectPage() {
   const [input, setInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const chatInputRef = useRef<HTMLTextAreaElement>(null)
+
+  const LINE_HEIGHT_PX = 18 * 1.4 // font-size * line-height
+  const MAX_LINES = 8
+  const MAX_INPUT_HEIGHT_PX = LINE_HEIGHT_PX * MAX_LINES
+
+  function resizeChatInput() {
+    const el = chatInputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const h = Math.min(el.scrollHeight, MAX_INPUT_HEIGHT_PX)
+    el.style.height = `${Math.max(LINE_HEIGHT_PX, h)}px`
+  }
+
+  useEffect(() => {
+    resizeChatInput()
+  }, [input])
 
   // Load project + chat history in parallel
   useEffect(() => {
@@ -119,7 +136,7 @@ export default function ProjectPage() {
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -246,14 +263,16 @@ export default function ProjectPage() {
 
           {/* Chat input bar */}
           <div className={styles.chatInputBar}>
-            <input
+            <textarea
+              ref={chatInputRef}
               className={styles.chatInput}
-              type="text"
               placeholder="Ask anything"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={chatLoading}
+              rows={1}
+              aria-label="Chat message"
             />
             <button
               className={styles.sendBtn}
