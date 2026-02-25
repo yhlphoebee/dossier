@@ -21,7 +21,8 @@ interface ChatMessage {
   created_at?: string
 }
 
-const STEPS = ['Brief', 'Research', 'Concept', 'Develop', 'Deliver']
+const TABS = ['Strategy', 'Research', 'Concept', 'Present']
+const CLARITY_DOTS = 8
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>()
@@ -32,7 +33,12 @@ export default function ProjectPage() {
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [savedFeedback, setSavedFeedback] = useState(false)
-  const [activeStep, setActiveStep] = useState(0)
+  const [activeTab, setActiveTab] = useState(0)
+  const [clarityLevel] = useState(2)
+  const [problemStatement, setProblemStatement] = useState('')
+  const [assumptions, setAssumptions] = useState('')
+  const [problemOpen, setProblemOpen] = useState(false)
+  const [assumptionsOpen, setAssumptionsOpen] = useState(false)
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -190,62 +196,133 @@ export default function ProjectPage() {
       <div className={styles.body}>
         {/* ── Left panel ── */}
         <aside className={styles.leftPanel}>
-          {/* Title input */}
-          <div className={styles.inputCard}>
-            <input
-              className={styles.titleInput}
-              type="text"
-              placeholder="Title of Project"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          {/* Description input */}
-          <div className={styles.textareaCard}>
-            <textarea
-              className={styles.descriptionInput}
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <button
-              className={`${styles.saveBtn} ${savedFeedback ? styles.saveBtnSaved : ''}`}
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {savedFeedback ? 'SAVED' : 'SAVE'}
-            </button>
-          </div>
-
-          {/* Step progress dots */}
-          <div className={styles.stepsRow}>
-            {STEPS.map((step, i) => (
-              <div key={step} className={styles.stepItem}>
-                <button
-                  className={`${styles.stepDot} ${i === activeStep ? styles.stepDotActive : styles.stepDotInactive}`}
-                  onClick={() => setActiveStep(i)}
-                  aria-label={step}
-                />
-                {i < STEPS.length - 1 && <div className={styles.stepLine} />}
-              </div>
-            ))}
-          </div>
-          <div className={styles.stepLabels}>
-            {STEPS.map((step, i) => (
-              <span
-                key={step}
-                className={`${styles.stepLabel} ${i === activeStep ? styles.stepLabelActive : ''}`}
+          {/* Tab bar */}
+          <nav className={styles.tabBar}>
+            {TABS.map((tab, i) => (
+              <button
+                key={tab}
+                className={`${styles.tab} ${i === activeTab ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab(i)}
               >
-                {step}
-              </span>
+                {tab}
+                {i === activeTab && <span className={styles.tabIndicator} />}
+              </button>
             ))}
+          </nav>
+
+          {/* Main case file card */}
+          <div className={styles.caseCard}>
+            {/* Top row: date + UPDATE button */}
+            <div className={styles.cardTopRow}>
+              <span className={styles.cardDate}>
+                {project
+                  ? new Date(project.updated_at).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: '2-digit',
+                      year: 'numeric',
+                    })
+                  : '—'}
+              </span>
+              <button
+                className={`${styles.updateBtn} ${savedFeedback ? styles.updateBtnSaved : ''}`}
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {savedFeedback ? 'SAVED' : 'UPDATE'}
+              </button>
+            </div>
+
+            <div className={styles.cardDivider} />
+
+            {/* Strategic Clarity row */}
+            <div className={styles.clarityRow}>
+              <span className={styles.clarityLabel}>Strategic Clarity</span>
+              <div className={styles.clarityDots}>
+                {Array.from({ length: CLARITY_DOTS }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`${styles.clarityDot} ${i < clarityLevel ? styles.clarityDotActive : ''}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.cardDivider} />
+
+            {/* Key statement block */}
+            <div className={styles.statementBlock}>
+              <textarea
+                className={styles.statementInput}
+                placeholder="Enter your key strategic statement here…"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className={styles.cardDivider} />
+
+            {/* Accordion: Problem Statement */}
+            <div className={styles.accordionRow}>
+              <button
+                className={styles.accordionHeader}
+                onClick={() => setProblemOpen((v) => !v)}
+              >
+                <span className={styles.accordionLabel}>Problem Statement</span>
+                <svg
+                  className={`${styles.chevron} ${problemOpen ? styles.chevronOpen : ''}`}
+                  width="12" height="8" viewBox="0 0 12 8" fill="none"
+                >
+                  <path d="M1 1L6 6L11 1" stroke="#999" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+              {problemOpen && (
+                <textarea
+                  className={styles.accordionTextarea}
+                  placeholder="Describe the problem this project addresses…"
+                  value={problemStatement}
+                  onChange={(e) => setProblemStatement(e.target.value)}
+                  rows={4}
+                />
+              )}
+            </div>
+
+            <div className={styles.cardDivider} />
+
+            {/* Accordion: Assumptions */}
+            <div className={styles.accordionRow}>
+              <button
+                className={styles.accordionHeader}
+                onClick={() => setAssumptionsOpen((v) => !v)}
+              >
+                <span className={styles.accordionLabel}>Assumptions</span>
+                <svg
+                  className={`${styles.chevron} ${assumptionsOpen ? styles.chevronOpen : ''}`}
+                  width="12" height="8" viewBox="0 0 12 8" fill="none"
+                >
+                  <path d="M1 1L6 6L11 1" stroke="#999" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+              {assumptionsOpen && (
+                <textarea
+                  className={styles.accordionTextarea}
+                  placeholder="List the key assumptions for this project…"
+                  value={assumptions}
+                  onChange={(e) => setAssumptions(e.target.value)}
+                  rows={4}
+                />
+              )}
+            </div>
           </div>
 
           {/* Dossi Board preview */}
           <div className={styles.dossiBoard}>
             <div className={styles.dossiBoardLeft}>
               <span className={styles.dossiBoardTitle}>Dossi Board</span>
+              <svg className={styles.dossiBoardArrow} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="10" y1="110" x2="110" y2="10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                <polyline points="2,10 110,10 110,118" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
             </div>
             <div className={styles.dossiBoardRight}>
               {project && (
