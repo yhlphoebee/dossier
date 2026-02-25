@@ -1,6 +1,6 @@
 .sidebar {
-  width: 518px;
-  min-width: 518px;
+  width: 440px;
+  min-width: 440px;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -17,7 +17,7 @@
 /* ── Logo ── */
 .logo {
   font-family: var(--font-display);
-  font-size: 138px;
+  font-size: 130px;
   font-weight: 400;
   line-height: 1;
   color: var(--color-black);
@@ -28,8 +28,8 @@
 /* ── Divider ── */
 .divider {
   height: 1px;
-  background-color: var(--color-divider);
-  margin: 0 24px;
+  background-color: #ADADAD;
+  margin: 10px 24px;
 }
 
 /* ── Search ── */
@@ -43,7 +43,7 @@
   border: none;
   outline: none;
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: 16px;
   color: var(--color-text-primary);
   caret-color: var(--color-text-primary);
 }
@@ -55,7 +55,7 @@
 /* ── Sort ── */
 .sortRow {
   display: flex;
-  gap: 0;
+  justify-content: space-between;
   padding: 22px 24px;
   align-items: center;
 }
@@ -67,12 +67,7 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  margin-right: 52px;
   transition: color 0.15s;
-}
-
-.sortBtn:last-child {
-  margin-right: 0;
 }
 
 .sortActive {
@@ -100,8 +95,8 @@
 
 .filterLabel {
   font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 400;
+  font-size: 22px;
+  font-weight: 450;
   color: var(--color-text-primary);
 }
 

@@ -5,24 +5,20 @@ type SortOption = 'Relevant' | 'Latest' | 'Oldest' | 'Popular'
 
 const SORT_OPTIONS: SortOption[] = ['Relevant', 'Latest', 'Oldest', 'Popular']
 
-interface FilterCategory {
+export interface FilterCategory {
   label: string
   enabled: boolean
 }
 
-export default function Sidebar() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeSort, setActiveSort] = useState<SortOption>('Relevant')
-  const [filters, setFilters] = useState<FilterCategory[]>([
-    { label: 'Visual Exploration', enabled: false },
-    { label: 'Typeface', enabled: false },
-  ])
+interface SidebarProps {
+  searchQuery: string
+  onSearchChange: (value: string) => void
+  filters: FilterCategory[]
+  onToggleFilter: (index: number) => void
+}
 
-  const toggleFilter = (index: number) => {
-    setFilters((prev) =>
-      prev.map((f, i) => (i === index ? { ...f, enabled: !f.enabled } : f))
-    )
-  }
+export default function Sidebar({ searchQuery, onSearchChange, filters, onToggleFilter }: SidebarProps) {
+  const [activeSort, setActiveSort] = useState<SortOption>('Relevant')
 
   return (
     <aside className={styles.sidebar}>
@@ -39,7 +35,7 @@ export default function Sidebar() {
             type="text"
             placeholder="Search"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
 
@@ -68,7 +64,7 @@ export default function Sidebar() {
                 <span className={styles.filterLabel}>{filter.label}</span>
                 <button
                   className={`${styles.toggle} ${filter.enabled ? styles.toggleOn : styles.toggleOff}`}
-                  onClick={() => toggleFilter(index)}
+                  onClick={() => onToggleFilter(index)}
                   aria-label={`Toggle ${filter.label}`}
                   role="switch"
                   aria-checked={filter.enabled}

@@ -55,6 +55,11 @@
   margin: auto;
   object-fit: contain;
   z-index: 1;
+  transition: transform 0.65s ease-out;
+}
+
+.card:hover .thumbnailImg {
+  transform: rotate(60deg);
 }
 
 /* .thumbnailPlaceholder — reserved when no image */
@@ -70,11 +75,17 @@
   flex-shrink: 0;
   align-self: flex-start;
   width: auto;
+  transition: gap 0.28s ease-out;
 }
 
 .bottomMarkers {
   align-self: flex-end;
   justify-content: flex-end;
+}
+
+.card:hover .topMarkers,
+.card:hover .bottomMarkers {
+  gap: 12px;
 }
 
 .markerTop {

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import Sidebar, { type FilterCategory } from '../components/Sidebar'
 import ProjectCard from '../components/ProjectCard'
 import DeleteModal from '../components/DeleteModal'
 import styles from './HomePage.module.css'
 
-type TabOption = 'My Project' | 'Archive'
+type TabOption = 'My Project' | 'Archived'
 
 export interface Project {
   id: string
@@ -15,6 +15,18 @@ export interface Project {
   thumbnail_index: number
 }
 
+const INITIAL_FILTERS: FilterCategory[] = [
+  { label: 'Visual Exploration', enabled: false },
+  { label: 'Typeface', enabled: false },
+]
+
+function titleMatchesSearch(title: string, searchQuery: string): boolean {
+  const normalizedTitle = (title || 'Untitled').toLowerCase()
+  const keywords = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  if (keywords.length === 0) return true
+  return keywords.every((kw) => normalizedTitle.includes(kw))
+}
+
 export default function HomePage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabOption>('My Project')
@@ -22,6 +34,22 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState<FilterCategory[]>(INITIAL_FILTERS)
+
+  const toggleFilter = (index: number) => {
+    setFilters((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, enabled: !f.enabled } : f))
+    )
+  }
+
+  // When both toggles are off: filter by project title (keyword search). Otherwise show all.
+  const filteredProjects = useMemo(() => {
+    const bothOff = filters.every((f) => !f.enabled)
+    if (!bothOff) return projects
+    if (!searchQuery.trim()) return projects
+    return projects.filter((p) => titleMatchesSearch(p.title, searchQuery))
+  }, [projects, searchQuery, filters])
 
   const handleNewProject = async () => {
     setCreating(true)
@@ -42,7 +70,7 @@ export default function HomePage() {
   }
 
   const fetchProjects = () => {
-    const archived = activeTab === 'Archive'
+    const archived = activeTab === 'Archived'
     setLoading(true)
     fetch(`/api/projects?archived=${archived}`)
       .then((res) => {
@@ -101,20 +129,29 @@ export default function HomePage() {
 
   return (
     <div className={styles.layout}>
-      <Sidebar />
+      <Sidebar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={filters}
+        onToggleFilter={toggleFilter}
+      />
 
       <main className={styles.main}>
         {/* Top bar */}
         <div className={styles.topBar}>
           <div className={styles.tabs}>
-            {(['My Project', 'Archive'] as TabOption[]).map((tab) => (
-              <button
-                key={tab}
-                className={`${styles.tab} ${activeTab === tab ? styles.tabActive : styles.tabInactive}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </button>
+            {(['My Project', 'Archived'] as TabOption[]).map((tab) => (
+              <div key={tab} className={styles.tabWrapper}>
+                <button
+                  className={`${styles.tab} ${activeTab === tab ? styles.tabActive : styles.tabInactive}`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
+                <div
+                  className={`${styles.tabIndicator} ${activeTab === tab ? styles.tabIndicatorActive : ''}`}
+                />
+              </div>
             ))}
           </div>
           <button
@@ -126,14 +163,6 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Active tab indicator */}
-        <div className={styles.tabIndicatorRow}>
-          <div
-            className={styles.tabIndicator}
-            style={{ marginLeft: activeTab === 'My Project' ? 0 : '152px' }}
-          />
-        </div>
-
         <div className={styles.divider} />
 
         {/* Project grid */}
@@ -141,20 +170,24 @@ export default function HomePage() {
           <div className={styles.loading}>Loading…</div>
         ) : projects.length === 0 ? (
           <div className={styles.emptyState}>
-            {activeTab === 'Archive'
+            {activeTab === 'Archived'
               ? 'No archived projects.'
               : 'Click New Project to Start Discovering…'}
           </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className={styles.emptyState}>
+            No projects match your search.
+          </div>
         ) : (
           <div className={styles.projectGrid}>
-            {projects.map((project) => (
+            {filteredProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
                 onClick={() => navigate(`/project/${project.id}`)}
                 onDelete={() => setDeleteTarget(project)}
                 onArchive={activeTab === 'My Project' ? () => handleArchive(project) : undefined}
-                onRestore={activeTab === 'Archive' ? () => handleRestore(project) : undefined}
+                onRestore={activeTab === 'Archived' ? () => handleRestore(project) : undefined}
               />
             ))}
           </div>
