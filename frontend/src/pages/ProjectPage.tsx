@@ -12,6 +12,22 @@ interface Project {
   updated_at: string
   archived: boolean
   thumbnail_index: number
+  strategy_summary?: string
+  strategy_problem_statement?: string
+  strategy_assumptions?: string
+  strategy_detail_summary?: string
+  research_summary?: string
+  research_problem_statement?: string
+  research_assumptions?: string
+  research_detail_summary?: string
+  concept_summary?: string
+  concept_problem_statement?: string
+  concept_assumptions?: string
+  concept_detail_summary?: string
+  present_summary?: string
+  present_problem_statement?: string
+  present_assumptions?: string
+  present_detail_summary?: string
 }
 
 interface ChatMessage {
@@ -21,7 +37,10 @@ interface ChatMessage {
   created_at?: string
 }
 
-const TABS = ['Strategy', 'Research', 'Concept', 'Present']
+type AgentKey = 'strategy' | 'research' | 'concept' | 'present'
+
+const TABS = ['Strategy', 'Research', 'Concept', 'Present'] as const
+const TAB_KEYS: AgentKey[] = ['strategy', 'research', 'concept', 'present']
 const CLARITY_DOTS = 8
 
 export default function ProjectPage() {
@@ -30,22 +49,50 @@ export default function ProjectPage() {
 
   const [project, setProject] = useState<Project | null>(null)
   const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [savedFeedback, setSavedFeedback] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [clarityLevel] = useState(2)
-  const [problemStatement, setProblemStatement] = useState('')
-  const [assumptions, setAssumptions] = useState('')
+  const [summaryByAgent, setSummaryByAgent] = useState<Record<AgentKey, string>>({
+    strategy: '',
+    research: '',
+    concept: '',
+    present: '',
+  })
+  const [problemByAgent, setProblemByAgent] = useState<Record<AgentKey, string>>({
+    strategy: '',
+    research: '',
+    concept: '',
+    present: '',
+  })
+  const [assumptionsByAgent, setAssumptionsByAgent] = useState<Record<AgentKey, string>>({
+    strategy: '',
+    research: '',
+    concept: '',
+    present: '',
+  })
   const [problemOpen, setProblemOpen] = useState(false)
   const [assumptionsOpen, setAssumptionsOpen] = useState(false)
 
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [messagesByAgent, setMessagesByAgent] = useState<Record<AgentKey, ChatMessage[]>>({
+    strategy: [],
+    research: [],
+    concept: [],
+    present: [],
+  })
   const [input, setInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
   const titleSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const summarySaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const problemSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const assumptionsSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Local state for textareas to prevent cursor jumping
+  const [localSummary, setLocalSummary] = useState('')
+  const [localProblem, setLocalProblem] = useState('')
+  const [localAssumptions, setLocalAssumptions] = useState('')
 
   const LINE_HEIGHT_PX = 18 * 1.4 // font-size * line-height
   const MAX_LINES = 8
@@ -63,24 +110,63 @@ export default function ProjectPage() {
     resizeChatInput()
   }, [input])
 
-  // Load project + chat history in parallel
+  // Sync local textarea state with global state when agent changes
+  useEffect(() => {
+    const currentAgent = TAB_KEYS[activeTab]
+    setLocalSummary(summaryByAgent[currentAgent])
+    setLocalProblem(problemByAgent[currentAgent])
+    setLocalAssumptions(assumptionsByAgent[currentAgent])
+  }, [activeTab, summaryByAgent, problemByAgent, assumptionsByAgent])
+
+  // Load project + per-agent chat history in parallel
   useEffect(() => {
     if (!id) return
 
-    Promise.all([
-      fetch(`/api/projects/${id}`).then((r) => {
+    fetch(`/api/projects/${id}`)
+      .then((r) => {
         if (!r.ok) throw new Error('Not found')
         return r.json() as Promise<Project>
-      }),
-      fetch(`/api/projects/${id}/messages`).then((r) =>
-        r.ok ? (r.json() as Promise<ChatMessage[]>) : []
-      ),
-    ])
-      .then(([projectData, history]) => {
+      })
+      .then(async (projectData) => {
         setProject(projectData)
         setTitle(projectData.title === 'Untitled' ? '' : projectData.title)
-        setDescription(projectData.description ?? '')
-        setMessages(history)
+
+        // Seed per-agent summaries from project fields
+        setSummaryByAgent({
+          strategy: projectData.strategy_summary ?? '',
+          research: projectData.research_summary ?? '',
+          concept: projectData.concept_summary ?? '',
+          present: projectData.present_summary ?? '',
+        })
+        setProblemByAgent({
+          strategy: projectData.strategy_problem_statement ?? '',
+          research: projectData.research_problem_statement ?? '',
+          concept: projectData.concept_problem_statement ?? '',
+          present: projectData.present_problem_statement ?? '',
+        })
+        setAssumptionsByAgent({
+          strategy: projectData.strategy_assumptions ?? '',
+          research: projectData.research_assumptions ?? '',
+          concept: projectData.concept_assumptions ?? '',
+          present: projectData.present_assumptions ?? '',
+        })
+
+        // Load per-agent chat history
+        const agents: AgentKey[] = ['strategy', 'research', 'concept', 'present']
+        const histories = await Promise.all(
+          agents.map((agent) =>
+            fetch(`/api/projects/${id}/messages?agent=${agent}`).then((r) =>
+              r.ok ? (r.json() as Promise<ChatMessage[]>) : []
+            )
+          )
+        )
+
+        setMessagesByAgent({
+          strategy: histories[0] ?? [],
+          research: histories[1] ?? [],
+          concept: histories[2] ?? [],
+          present: histories[3] ?? [],
+        })
       })
       .catch(() => navigate('/'))
   }, [id, navigate])
@@ -88,7 +174,91 @@ export default function ProjectPage() {
   // Scroll chat to bottom on new message
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messagesByAgent, activeTab])
+
+  // Auto-save summary when user stops typing (debounced)
+  useEffect(() => {
+    const currentAgent = TAB_KEYS[activeTab]
+
+    if (summarySaveTimeoutRef.current) clearTimeout(summarySaveTimeoutRef.current)
+    summarySaveTimeoutRef.current = setTimeout(async () => {
+      summarySaveTimeoutRef.current = null
+      setSummaryByAgent((prev) => ({ ...prev, [currentAgent]: localSummary }))
+      try {
+        await fetch(`/api/projects/${id}/agent-summary`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agent: currentAgent,
+            summary: localSummary,
+          }),
+        })
+        // No feedback for summary saves, to avoid noise
+      } catch {
+        // Silent fail for now
+      }
+    }, 800)  // Slightly longer debounce for summary
+
+    return () => {
+      if (summarySaveTimeoutRef.current) clearTimeout(summarySaveTimeoutRef.current)
+    }
+  }, [localSummary, activeTab, id])
+
+  // Auto-save problem statement when user stops typing (debounced)
+  useEffect(() => {
+    const currentAgent = TAB_KEYS[activeTab]
+
+    if (problemSaveTimeoutRef.current) clearTimeout(problemSaveTimeoutRef.current)
+    problemSaveTimeoutRef.current = setTimeout(async () => {
+      problemSaveTimeoutRef.current = null
+      setProblemByAgent((prev) => ({ ...prev, [currentAgent]: localProblem }))
+      try {
+        await fetch(`/api/projects/${id}/agent-summary`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agent: currentAgent,
+            problem_statement: localProblem,
+          }),
+        })
+        // No feedback for saves, to avoid noise
+      } catch {
+        // Silent fail for now
+      }
+    }, 800)
+
+    return () => {
+      if (problemSaveTimeoutRef.current) clearTimeout(problemSaveTimeoutRef.current)
+    }
+  }, [localProblem, activeTab, id])
+
+  // Auto-save assumptions when user stops typing (debounced)
+  useEffect(() => {
+    const currentAgent = TAB_KEYS[activeTab]
+
+    if (assumptionsSaveTimeoutRef.current) clearTimeout(assumptionsSaveTimeoutRef.current)
+    assumptionsSaveTimeoutRef.current = setTimeout(async () => {
+      assumptionsSaveTimeoutRef.current = null
+      setAssumptionsByAgent((prev) => ({ ...prev, [currentAgent]: localAssumptions }))
+      try {
+        await fetch(`/api/projects/${id}/agent-summary`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agent: currentAgent,
+            assumptions: localAssumptions,
+          }),
+        })
+        // No feedback for saves, to avoid noise
+      } catch {
+        // Silent fail for now
+      }
+    }, 800)
+
+    return () => {
+      if (assumptionsSaveTimeoutRef.current) clearTimeout(assumptionsSaveTimeoutRef.current)
+    }
+  }, [localAssumptions, activeTab, id])
 
   // Auto-save title when user stops typing (debounced)
   useEffect(() => {
@@ -123,14 +293,24 @@ export default function ProjectPage() {
     if (!id) return
     setSaving(true)
     try {
-      await fetch(`/api/projects/${id}`, {
-        method: 'PATCH',
+      const agent = TAB_KEYS[activeTab]
+      const res = await fetch(`/api/projects/${id}/summary`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim() || 'Untitled',
-          description,
-        }),
+        body: JSON.stringify({ agent }),
       })
+      if (!res.ok) throw new Error('Summary failed')
+      const data: {
+        summary: string
+        problem_statment: string
+        assumptions: string
+        detail_summary: string
+      } = await res.json()
+
+      setSummaryByAgent((prev) => ({ ...prev, [agent]: data.summary }))
+      setProblemByAgent((prev) => ({ ...prev, [agent]: data.problem_statment }))
+      setAssumptionsByAgent((prev) => ({ ...prev, [agent]: data.assumptions }))
+
       setSavedFeedback(true)
       setTimeout(() => setSavedFeedback(false), 2000)
     } finally {
@@ -142,9 +322,14 @@ export default function ProjectPage() {
     const text = input.trim()
     if (!text || chatLoading) return
 
+    const agent = TAB_KEYS[activeTab]
+
     // Optimistically show the user message immediately
     const optimisticUser: ChatMessage = { role: 'user', content: text }
-    setMessages((prev) => [...prev, optimisticUser])
+    setMessagesByAgent((prev) => ({
+      ...prev,
+      [agent]: [...prev[agent], optimisticUser],
+    }))
     setInput('')
     setChatLoading(true)
 
@@ -152,21 +337,27 @@ export default function ProjectPage() {
       const res = await fetch(`/api/projects/${id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text, agent }),
       })
       if (!res.ok) throw new Error('Chat failed')
       const data = await res.json()
       // Replace the optimistic user message with the persisted one, then add assistant reply
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        data.user_message,
-        data.assistant_message,
-      ])
-    } catch {
-      setMessages((prev) => [
+      setMessagesByAgent((prev) => ({
         ...prev,
-        { role: 'assistant' as const, content: 'Sorry, something went wrong. Please try again.' },
-      ])
+        [agent]: [
+          ...prev[agent].slice(0, -1),
+          data.user_message,
+          data.assistant_message,
+        ],
+      }))
+    } catch {
+      setMessagesByAgent((prev) => ({
+        ...prev,
+        [agent]: [
+          ...prev[agent],
+          { role: 'assistant' as const, content: 'Sorry, something went wrong. Please try again.' },
+        ],
+      }))
     } finally {
       setChatLoading(false)
     }
@@ -180,6 +371,8 @@ export default function ProjectPage() {
   }
 
   const displayTitle = title.trim() || 'Untitled'
+  const currentAgent: AgentKey = TAB_KEYS[activeTab]
+  const messages = messagesByAgent[currentAgent]
 
   return (
     <div className={styles.layout}>
@@ -254,8 +447,8 @@ export default function ProjectPage() {
               <textarea
                 className={styles.statementInput}
                 placeholder="Enter your key strategic statement here…"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={localSummary}
+                onChange={(e) => setLocalSummary(e.target.value)}
                 rows={3}
               />
             </div>
@@ -280,8 +473,8 @@ export default function ProjectPage() {
                 <textarea
                   className={styles.accordionTextarea}
                   placeholder="Describe the problem this project addresses…"
-                  value={problemStatement}
-                  onChange={(e) => setProblemStatement(e.target.value)}
+                  value={localProblem}
+                  onChange={(e) => setLocalProblem(e.target.value)}
                   rows={4}
                 />
               )}
@@ -307,8 +500,8 @@ export default function ProjectPage() {
                 <textarea
                   className={styles.accordionTextarea}
                   placeholder="List the key assumptions for this project…"
-                  value={assumptions}
-                  onChange={(e) => setAssumptions(e.target.value)}
+                  value={localAssumptions}
+                  onChange={(e) => setLocalAssumptions(e.target.value)}
                   rows={4}
                 />
               )}

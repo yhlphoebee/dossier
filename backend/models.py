@@ -21,6 +21,27 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
+    # Per-agent summaries
+    strategy_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    strategy_problem_statement: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    strategy_assumptions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    strategy_detail_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    research_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    research_problem_statement: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    research_assumptions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    research_detail_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    concept_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    concept_problem_statement: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    concept_assumptions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    concept_detail_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    present_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    present_problem_statement: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    present_assumptions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    present_detail_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     messages: Mapped[list["ChatMessage"]] = relationship(
         "ChatMessage", back_populates="project", order_by="ChatMessage.created_at", cascade="all, delete-orphan"
     )
@@ -33,6 +54,7 @@ class ChatMessage(Base):
     project_id: Mapped[str] = mapped_column(String, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     role: Mapped[str] = mapped_column(String, nullable=False)  # "user" | "assistant"
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    agent: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     project: Mapped["Project"] = relationship("Project", back_populates="messages")

@@ -23,6 +23,22 @@ class ProjectOut(BaseModel):
     thumbnail_index: int
     created_at: datetime
     updated_at: datetime
+    strategy_summary: Optional[str]
+    strategy_problem_statement: Optional[str]
+    strategy_assumptions: Optional[str]
+    strategy_detail_summary: Optional[str]
+    research_summary: Optional[str]
+    research_problem_statement: Optional[str]
+    research_assumptions: Optional[str]
+    research_detail_summary: Optional[str]
+    concept_summary: Optional[str]
+    concept_problem_statement: Optional[str]
+    concept_assumptions: Optional[str]
+    concept_detail_summary: Optional[str]
+    present_summary: Optional[str]
+    present_problem_statement: Optional[str]
+    present_assumptions: Optional[str]
+    present_detail_summary: Optional[str]
 
     model_config = {"from_attributes": True}
 
@@ -35,6 +51,13 @@ class UpdateProjectRequest(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     archived: Optional[bool] = None
+
+
+class UpdateAgentSummaryRequest(BaseModel):
+    agent: str
+    summary: Optional[str] = None
+    problem_statement: Optional[str] = None
+    assumptions: Optional[str] = None
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -75,6 +98,47 @@ def update_project(project_id: str, body: UpdateProjectRequest, db: Session = De
         project.description = body.description
     if body.archived is not None:
         project.archived = body.archived
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+@router.patch("/projects/{project_id}/agent-summary", response_model=ProjectOut)
+def update_agent_summary(project_id: str, body: UpdateAgentSummaryRequest, db: Session = Depends(get_db)):
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    agent = body.agent.lower()
+    if agent == "strategy":
+        if body.summary is not None:
+            project.strategy_summary = body.summary
+        if body.problem_statement is not None:
+            project.strategy_problem_statement = body.problem_statement
+        if body.assumptions is not None:
+            project.strategy_assumptions = body.assumptions
+    elif agent == "research":
+        if body.summary is not None:
+            project.research_summary = body.summary
+        if body.problem_statement is not None:
+            project.research_problem_statement = body.problem_statement
+        if body.assumptions is not None:
+            project.research_assumptions = body.assumptions
+    elif agent == "concept":
+        if body.summary is not None:
+            project.concept_summary = body.summary
+        if body.problem_statement is not None:
+            project.concept_problem_statement = body.problem_statement
+        if body.assumptions is not None:
+            project.concept_assumptions = body.assumptions
+    elif agent == "present":
+        if body.summary is not None:
+            project.present_summary = body.summary
+        if body.problem_statement is not None:
+            project.present_problem_statement = body.problem_statement
+        if body.assumptions is not None:
+            project.present_assumptions = body.assumptions
+
     db.commit()
     db.refresh(project)
     return project
