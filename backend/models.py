@@ -45,6 +45,9 @@ class Project(Base):
     messages: Mapped[list["ChatMessage"]] = relationship(
         "ChatMessage", back_populates="project", order_by="ChatMessage.created_at", cascade="all, delete-orphan"
     )
+    dossi_board_items: Mapped[list["DossiBoardItem"]] = relationship(
+        "DossiBoardItem", back_populates="project", order_by="DossiBoardItem.created_at", cascade="all, delete-orphan"
+    )
 
 
 class ChatMessage(Base):
@@ -58,3 +61,17 @@ class ChatMessage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     project: Mapped["Project"] = relationship("Project", back_populates="messages")
+
+
+class DossiBoardItem(Base):
+    __tablename__ = "dossi_board_items"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    project_id: Mapped[str] = mapped_column(String, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    folder: Mapped[str] = mapped_column(String, nullable=False)  # "images" | "typefaces" | "websites"
+    file_path: Mapped[str] = mapped_column(String, nullable=False)  # relative path stored in DB
+    filename: Mapped[str] = mapped_column(String, nullable=False)   # original filename for display
+    label: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # optional user-set label
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    project: Mapped["Project"] = relationship("Project", back_populates="dossi_board_items")

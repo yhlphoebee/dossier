@@ -1,0 +1,122 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+/* ── Tab bar ── */
+.tabBar {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  position: relative;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.tab {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 18px 24px;
+  background-color: #f5fcfe;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.tabActive {
+  background-color: #c0f3ff;
+}
+
+.tabLabel {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: #111;
+}
+
+.tabCountNum {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: #b3b2b2;
+}
+
+/* ── Content area ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px;
+}
+
+/* ── Bottom bar ── */
+.bottomBar {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  height: 92px;
+}
+
+.bottomLeft {
+  width: 222px;
+  background-color: #a3eeff;
+  display: flex;
+  align-items: flex-start;
+  padding: 20px 24px;
+  flex-shrink: 0;
+}
+
+.bottomRight {
+  flex: 1;
+  background-color: #effcff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 24px;
+}
+
+.bottomTitle {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--color-black);
+  line-height: 0.97;
+}
+
+.collapseBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.collapseBtn:hover {
+  opacity: 1;
+}
+
+/* ── Empty state ── */
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+}
+
+.emptyText {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: #b3b2b2;
+  font-weight: 400;
+}

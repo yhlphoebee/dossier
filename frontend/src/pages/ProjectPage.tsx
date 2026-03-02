@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { getGraphicElement } from '../utils/assets'
+import DossiBoard from '../components/DossiBoard'
 import styles from './ProjectPage.module.css'
 
 interface Project {
@@ -73,6 +74,7 @@ export default function ProjectPage() {
   })
   const [problemOpen, setProblemOpen] = useState(false)
   const [assumptionsOpen, setAssumptionsOpen] = useState(false)
+  const [dossiBoardExpanded, setDossiBoardExpanded] = useState(false)
 
   const [messagesByAgent, setMessagesByAgent] = useState<Record<AgentKey, ChatMessage[]>>({
     strategy: [],
@@ -395,7 +397,9 @@ export default function ProjectPage() {
 
       <div className={styles.body}>
         {/* ── Left panel ── */}
-        <aside className={styles.leftPanel}>
+        <aside className={`${styles.leftPanel} ${dossiBoardExpanded ? styles.leftPanelExpanded : ''}`}>
+          {!dossiBoardExpanded && (
+          <>
           {/* Tab bar */}
           <nav className={styles.tabBar}>
             {TABS.map((tab, i) => (
@@ -515,14 +519,20 @@ export default function ProjectPage() {
             </div>
           </div>
 
-          {/* Dossi Board preview */}
+          {/* Dossi Board preview (collapsed) */}
           <div className={styles.dossiBoard}>
             <div className={styles.dossiBoardLeft}>
               <span className={styles.dossiBoardTitle}>Dossi Board</span>
-              <svg className={styles.dossiBoardArrow} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <line x1="10" y1="110" x2="110" y2="10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                <polyline points="2,10 110,10 110,118" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
+              <button
+                className={styles.dossiBoardArrowBtn}
+                onClick={() => setDossiBoardExpanded(true)}
+                aria-label="Expand Dossi Board"
+              >
+                <svg className={styles.dossiBoardArrow} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="10" y1="110" x2="110" y2="10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                  <polyline points="2,10 110,10 110,118" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+              </button>
             </div>
             <div className={styles.dossiBoardRight}>
               {project && (
@@ -534,6 +544,15 @@ export default function ProjectPage() {
               )}
             </div>
           </div>
+          </>
+          )}
+
+          {/* Dossi Board expanded */}
+          {dossiBoardExpanded && (
+            <div className={styles.dossiBoardExpanded}>
+              <DossiBoard onCollapse={() => setDossiBoardExpanded(false)} />
+            </div>
+          )}
         </aside>
 
         {/* ── Right panel: AI Chat ── */}
