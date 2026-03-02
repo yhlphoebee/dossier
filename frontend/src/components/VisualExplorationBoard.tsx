@@ -12,6 +12,7 @@ const allGlobs: Record<string, Record<string, { default: string }>> = {
   branding:         import.meta.glob('../assets/visual-exploration/branding/*.(png|jpg|jpeg|gif|webp|avif|svg)', { eager: true }),
   motion:           import.meta.glob('../assets/visual-exploration/motion/*.(png|jpg|jpeg|gif|webp|avif|svg)', { eager: true }),
   technology:       import.meta.glob('../assets/visual-exploration/technology/*.(png|jpg|jpeg|gif|webp|avif|svg)', { eager: true }),
+  packaging:        import.meta.glob('../assets/visual-exploration/packaging/*.(png|jpg|jpeg|gif|webp|avif|svg)', { eager: true }),
 }
 
 // Returns { src, filename } so we can match on the filename for search
@@ -42,12 +43,13 @@ function filterBySearch(
 // Each non-Related tab maps to a folder key in src/assets/visual-exploration/
 
 const TABS: { label: string; folderKey: string | null }[] = [
-  { label: 'Related',       folderKey: null },           // searches across all folders
+  { label: 'Related',        folderKey: null },
   { label: 'Graphic Design', folderKey: 'graphic-design' },
-  { label: 'UI/UX',         folderKey: 'ui-ux' },
-  { label: 'Branding',      folderKey: 'branding' },
-  { label: 'Motion',        folderKey: 'motion' },
-  { label: 'Technology',    folderKey: 'technology' },
+  { label: 'UI/UX',          folderKey: 'ui-ux' },
+  { label: 'Branding',       folderKey: 'branding' },
+  { label: 'Motion',         folderKey: 'motion' },
+  { label: 'Technology',     folderKey: 'technology' },
+  { label: 'Packaging',      folderKey: 'packaging' },
 ]
 
 // ─── Masonry helpers ──────────────────────────────────────────────────────────
