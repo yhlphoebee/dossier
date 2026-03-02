@@ -212,12 +212,19 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
 
 // ── Masonry grid ─────────────────────────────────────────────────────────────
 
-const NUM_COLS = 3
+const MIN_COLS = 3
+const MAX_COLS = 5
+const MIN_COL_WIDTH = 220
 
-function distributeColumns(items: DossiBoardItem[]): DossiBoardItem[][] {
-  const cols: DossiBoardItem[][] = Array.from({ length: NUM_COLS }, () => [])
-  items.forEach((item, i) => cols[i % NUM_COLS].push(item))
+function distributeColumns(items: DossiBoardItem[], numCols: number): DossiBoardItem[][] {
+  const cols: DossiBoardItem[][] = Array.from({ length: numCols }, () => [])
+  items.forEach((item, i) => cols[i % numCols].push(item))
   return cols
+}
+
+function columnCountForWidth(width: number): number {
+  const cols = Math.floor(width / MIN_COL_WIDTH)
+  return Math.min(MAX_COLS, Math.max(MIN_COLS, cols))
 }
 
 interface MasonryGridProps {
@@ -227,10 +234,25 @@ interface MasonryGridProps {
 }
 
 function MasonryGrid({ items, onDelete, onAddMore }: MasonryGridProps) {
-  const columns = distributeColumns(items)
+  const gridRef = useRef<HTMLDivElement>(null)
+  const [numCols, setNumCols] = useState(MIN_COLS)
+
+  useEffect(() => {
+    const el = gridRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      const { width } = entries[0].contentRect
+      setNumCols(columnCountForWidth(width))
+    })
+    ro.observe(el)
+    setNumCols(columnCountForWidth(el.getBoundingClientRect().width))
+    return () => ro.disconnect()
+  }, [])
+
+  const columns = distributeColumns(items, numCols)
 
   return (
-    <div className={styles.masonryGrid}>
+    <div ref={gridRef} className={styles.masonryGrid}>
       {columns.map((col, ci) => (
         <div key={ci} className={styles.masonryColumn}>
           {col.map((item) => (
