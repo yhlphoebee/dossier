@@ -82,6 +82,15 @@
   gap: 16px;
 }
 
+/* ── Image tile wrapper (enables hover overlay + button) ── */
+.imageTile {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: visible; /* allow picker to overflow */
+}
+
 /* Real images */
 .image {
   width: 100%;
@@ -89,6 +98,39 @@
   border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
+}
+
+/* Dark semi-transparent overlay on hover */
+.hoverOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background-color: rgba(19, 19, 19, 0.43);
+  pointer-events: none;
+}
+
+/* Cyan + button — top-right corner */
+.addToProjectBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-accent-cyan);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background-color 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.addToProjectBtn:hover {
+  background-color: #6fd8ef;
+  transform: scale(1.08);
 }
 
 /* Empty state */

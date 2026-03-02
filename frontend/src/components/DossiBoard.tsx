@@ -232,7 +232,11 @@ interface ImageTileProps {
 
 function ImageTile({ item, onDelete }: ImageTileProps) {
   const [hovered, setHovered] = useState(false)
-  const src = `/uploads/dossi_board/${item.file_path}`
+  // Asset references are stored as "asset:<url>" — use the URL directly.
+  // Uploaded files are served from /uploads/dossi_board/<relative_path>.
+  const src = item.file_path.startsWith('asset:')
+    ? item.file_path.slice('asset:'.length)
+    : `/uploads/dossi_board/${item.file_path}`
 
   return (
     <div

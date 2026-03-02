@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import styles from './VisualExplorationBoard.module.css'
+import AddToProjectPicker from './AddToProjectPicker'
 
 // ─── Image loading via Vite glob ─────────────────────────────────────────────
 // To add images: drop files into src/assets/visual-exploration/<folder-name>/
@@ -115,18 +116,80 @@ export default function VisualExplorationBoard({ searchQuery }: VisualExploratio
         <div className={styles.masonryGrid}>
           {columns.map((col, ci) => (
             <div key={ci} className={styles.masonryColumn}>
-              {col.map((src) => (
-                <img
-                  key={src}
-                  src={src}
-                  alt=""
-                  className={styles.image}
-                  draggable={false}
-                />
-              ))}
+              {col.map((src, idx) => {
+                const entry = entries.find((e) => e.src === src)
+                return (
+                  <ImageTile
+                    key={src}
+                    src={src}
+                    filename={entry?.filename ?? `image-${idx}`}
+                  />
+                )
+              })}
             </div>
           ))}
         </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Image tile with hover overlay + add button ───────────────────────────────
+
+interface ImageTileProps {
+  src: string
+  filename: string
+}
+
+function ImageTile({ src, filename }: ImageTileProps) {
+  const [hovered, setHovered] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const tileRef = useRef<HTMLDivElement>(null)
+
+  // Close picker when clicking outside the tile
+  useEffect(() => {
+    if (!pickerOpen) return
+    const handler = (e: MouseEvent) => {
+      if (tileRef.current && !tileRef.current.contains(e.target as Node)) {
+        setPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [pickerOpen])
+
+  return (
+    <div
+      ref={tileRef}
+      className={styles.imageTile}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false) }}
+    >
+      <img src={src} alt="" className={styles.image} draggable={false} />
+
+      {/* Dark overlay on hover */}
+      {hovered && <div className={styles.hoverOverlay} />}
+
+      {/* Cyan + button — top right */}
+      {hovered && (
+        <button
+          className={styles.addToProjectBtn}
+          onClick={(e) => { e.stopPropagation(); setPickerOpen((v) => !v) }}
+          aria-label="Add to project"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </button>
+      )}
+
+      {/* Project picker dropdown */}
+      {pickerOpen && (
+        <AddToProjectPicker
+          imageSrc={src}
+                  imageFilename={src.split('/').pop() ?? `${filename}.png`}
+          onClose={() => setPickerOpen(false)}
+        />
       )}
     </div>
   )

@@ -115,6 +115,45 @@ def update_item_label(
     return item
 
 
+class AddFromAssetRequest(BaseModel):
+    # The Vite-resolved asset URL (e.g. /assets/graphic-01-abc123.png)
+    # Stored with an "asset:" prefix so DossiBoard knows to render it directly
+    src_path: str
+    filename: str
+    folder: str = "images"
+    label: Optional[str] = None
+
+
+@router.post("/projects/{project_id}/dossi-board/from-asset", response_model=DossiBoardItemOut, status_code=201)
+def add_item_from_asset(
+    project_id: str,
+    body: AddFromAssetRequest,
+    db: Session = Depends(get_db),
+):
+    """Store a reference to a visual-exploration asset without copying the file."""
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if body.folder not in VALID_FOLDERS:
+        raise HTTPException(status_code=400, detail=f"Invalid folder. Must be one of: {', '.join(VALID_FOLDERS)}")
+
+    # Prefix with "asset:" so the frontend knows to use the path directly
+    stored_path = f"asset:{body.src_path}"
+
+    item = DossiBoardItem(
+        project_id=project_id,
+        folder=body.folder,
+        file_path=stored_path,
+        filename=body.filename,
+        label=body.label,
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
 @router.delete("/projects/{project_id}/dossi-board/{item_id}", status_code=204)
 def delete_item(
     project_id: str,
@@ -128,10 +167,11 @@ def delete_item(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    # Remove the file from disk
-    file_on_disk = UPLOAD_ROOT / item.file_path
-    if file_on_disk.exists():
-        file_on_disk.unlink()
+    # Only remove uploaded files from disk — asset references have no file to delete
+    if not item.file_path.startswith("asset:"):
+        file_on_disk = UPLOAD_ROOT / item.file_path
+        if file_on_disk.exists():
+            file_on_disk.unlink()
 
     db.delete(item)
     db.commit()
