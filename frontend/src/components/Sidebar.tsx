@@ -4,8 +4,8 @@ import styles from './Sidebar.module.css'
 function ChevronDoubleLeft() {
   return (
     <svg width="20" height="14" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M10 1L4 7L10 13" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M16 1L10 7L16 13" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10 1L4 7L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M16 1L10 7L16 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -13,8 +13,8 @@ function ChevronDoubleLeft() {
 function ChevronDoubleRight() {
   return (
     <svg width="20" height="14" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M4 1L10 7L4 13" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M10 1L16 7L10 13" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 1L10 7L4 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10 1L16 7L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
