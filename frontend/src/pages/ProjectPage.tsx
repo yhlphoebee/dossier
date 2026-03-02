@@ -36,6 +36,8 @@ interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   created_at?: string
+  image_url?: string
+  image_src?: string  // client-only alias; populated from image_url on load
 }
 
 type AgentKey = 'strategy' | 'research' | 'concept' | 'present'
@@ -220,11 +222,14 @@ export default function ProjectPage() {
           )
         )
 
+        const hydrate = (msgs: ChatMessage[]) =>
+          msgs.map((m) => ({ ...m, image_src: m.image_url ?? m.image_src }))
+
         setMessagesByAgent({
-          strategy: histories[0] ?? [],
-          research: histories[1] ?? [],
-          concept: histories[2] ?? [],
-          present: histories[3] ?? [],
+          strategy: hydrate(histories[0] ?? []),
+          research: hydrate(histories[1] ?? []),
+          concept: hydrate(histories[2] ?? []),
+          present: hydrate(histories[3] ?? []),
         })
       })
       .catch(() => navigate('/'))
@@ -401,10 +406,14 @@ export default function ProjectPage() {
       }
     }
 
-    const displayContent = text || (imageToSend ? `[Image: ${imageToSend.name}]` : '')
+    const displayContent = text || ''
 
     // Optimistically show the user message immediately
-    const optimisticUser: ChatMessage = { role: 'user', content: displayContent }
+    const optimisticUser: ChatMessage = {
+      role: 'user',
+      content: displayContent,
+      ...(imageToSend ? { image_src: imageToSend.src } : {}),
+    }
     setMessagesByAgent((prev) => ({
       ...prev,
       [agent]: [...prev[agent], optimisticUser],
@@ -430,7 +439,7 @@ export default function ProjectPage() {
         ...prev,
         [agent]: [
           ...prev[agent].slice(0, -1),
-          data.user_message,
+          { ...data.user_message, image_src: data.user_message.image_url ?? undefined },
           data.assistant_message,
         ],
       }))
@@ -682,14 +691,21 @@ export default function ProjectPage() {
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant}`}
+                className={`${styles.chatMessageGroup} ${msg.role === 'user' ? styles.chatMessageGroupUser : styles.chatMessageGroupAssistant}`}
               >
-                {msg.role === 'assistant' ? (
-                  <div className={styles.chatMarkdown}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                {msg.role === 'user' && msg.image_src && (
+                  <img src={msg.image_src} alt="attached" className={styles.chatBubbleImage} />
+                )}
+                {(msg.role === 'assistant' || msg.content) && (
+                  <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant}`}>
+                    {msg.role === 'assistant' ? (
+                      <div className={styles.chatMarkdown}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      msg.content
+                    )}
                   </div>
-                ) : (
-                  msg.content
                 )}
               </div>
             ))}

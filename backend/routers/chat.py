@@ -19,6 +19,7 @@ class MessageOut(BaseModel):
     id: str
     role: str
     content: str
+    image_url: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -73,7 +74,13 @@ async def send_message(
     stored_content = body.content.strip()
     if not stored_content and body.image_url:
         stored_content = "[Image]"
-    user_msg = ChatMessage(project_id=project_id, role="user", content=stored_content, agent=body.agent)
+    user_msg = ChatMessage(
+        project_id=project_id,
+        role="user",
+        content=stored_content,
+        agent=body.agent,
+        image_url=body.image_url,
+    )
     db.add(user_msg)
     db.flush()
 
