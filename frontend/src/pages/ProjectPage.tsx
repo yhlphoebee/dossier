@@ -74,7 +74,27 @@ export default function ProjectPage() {
   })
   const [problemOpen, setProblemOpen] = useState(false)
   const [assumptionsOpen, setAssumptionsOpen] = useState(false)
-  const [dossiBoardExpanded, setDossiBoardExpanded] = useState(false)
+  // 'closed' | 'opening' | 'open' | 'closing'
+  const [dossiBoardState, setDossiBoardState] = useState<'closed' | 'opening' | 'open' | 'closing'>('closed')
+
+  const openDossiBoard = () => {
+    setDossiBoardState('opening')
+    // Next frame: trigger the CSS transition
+    requestAnimationFrame(() => requestAnimationFrame(() => setDossiBoardState('open')))
+  }
+
+  const closeDossiBoard = () => {
+    setDossiBoardState('closing')
+    // After transition ends, fully unmount
+    setTimeout(() => setDossiBoardState('closed'), 420)
+  }
+
+  // Panel is wide during opening + open; starts collapsing the moment closing begins
+  const dossiBoardExpanded = dossiBoardState === 'opening' || dossiBoardState === 'open'
+  // DossiBoard div stays mounted during closing so it can animate out
+  const dossiBoardMounted = dossiBoardState !== 'closed'
+  // Only 'open' gets the visible class — 'opening' is the initial mounted-but-invisible frame
+  const dossiBoardVisible = dossiBoardState === 'open'
 
   const [messagesByAgent, setMessagesByAgent] = useState<Record<AgentKey, ChatMessage[]>>({
     strategy: [],
@@ -397,9 +417,9 @@ export default function ProjectPage() {
 
       <div className={styles.body}>
         {/* ── Left panel ── */}
-        <aside className={`${styles.leftPanel} ${dossiBoardExpanded ? styles.leftPanelExpanded : ''}`}>
-          {!dossiBoardExpanded && (
-          <>
+        <aside className={`${styles.leftPanel} ${dossiBoardExpanded ? styles.leftPanelExpanded : ''} ${dossiBoardState === 'open' ? styles.leftPanelOpen : ''}`}>
+          {/* Normal content — fades out as board opens */}
+          <div className={`${styles.panelNormal} ${dossiBoardState === 'open' || dossiBoardState === 'opening' ? styles.panelNormalHidden : ''}`}>
           {/* Tab bar */}
           <nav className={styles.tabBar}>
             {TABS.map((tab, i) => (
@@ -525,7 +545,7 @@ export default function ProjectPage() {
               <span className={styles.dossiBoardTitle}>Dossi Board</span>
               <button
                 className={styles.dossiBoardArrowBtn}
-                onClick={() => setDossiBoardExpanded(true)}
+                onClick={openDossiBoard}
                 aria-label="Expand Dossi Board"
               >
                 <svg className={styles.dossiBoardArrow} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -544,13 +564,12 @@ export default function ProjectPage() {
               )}
             </div>
           </div>
-          </>
-          )}
+          </div>{/* end panelNormal */}
 
-          {/* Dossi Board expanded */}
-          {dossiBoardExpanded && (
-            <div className={styles.dossiBoardExpanded}>
-              <DossiBoard projectId={id!} onCollapse={() => setDossiBoardExpanded(false)} />
+          {/* Dossi Board overlay — stays mounted during closing so it can animate out */}
+          {dossiBoardMounted && (
+            <div className={`${styles.dossiBoardExpanded} ${dossiBoardVisible ? styles.dossiBoardExpandedVisible : ''}`}>
+              <DossiBoard projectId={id!} onCollapse={closeDossiBoard} />
             </div>
           )}
         </aside>
