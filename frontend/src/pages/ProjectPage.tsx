@@ -550,7 +550,7 @@ export default function ProjectPage() {
           {/* Dossi Board expanded */}
           {dossiBoardExpanded && (
             <div className={styles.dossiBoardExpanded}>
-              <DossiBoard onCollapse={() => setDossiBoardExpanded(false)} />
+              <DossiBoard projectId={id!} onCollapse={() => setDossiBoardExpanded(false)} />
             </div>
           )}
         </aside>
