@@ -380,6 +380,40 @@
   overflow-y: hidden;
 }
 
+/* Disable transition while user is dragging the resize handle */
+.leftPanelResizing {
+  transition: none !important;
+}
+
+/* ── Resize handle ── */
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resizeHandle::after {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 40px;
+  border-radius: 2px;
+  background-color: transparent;
+  transition: background-color 0.15s;
+}
+
+.resizeHandle:hover::after,
+.resizeHandleActive::after {
+  background-color: #8deaff;
+}
+
 .dossiBoardExpanded {
   position: absolute;
   inset: 0;

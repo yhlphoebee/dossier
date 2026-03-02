@@ -76,17 +76,52 @@ export default function ProjectPage() {
   const [assumptionsOpen, setAssumptionsOpen] = useState(false)
   // 'closed' | 'opening' | 'open' | 'closing'
   const [dossiBoardState, setDossiBoardState] = useState<'closed' | 'opening' | 'open' | 'closing'>('closed')
+  const [dossiBoardWidth, setDossiBoardWidth] = useState<number | null>(null)
+  const [isResizing, setIsResizing] = useState(false)
+  const bodyRef = useRef<HTMLDivElement>(null)
 
   const openDossiBoard = () => {
     setDossiBoardState('opening')
-    // Next frame: trigger the CSS transition
     requestAnimationFrame(() => requestAnimationFrame(() => setDossiBoardState('open')))
   }
 
   const closeDossiBoard = () => {
     setDossiBoardState('closing')
-    // After transition ends, fully unmount
+    setDossiBoardWidth(null)
     setTimeout(() => setDossiBoardState('closed'), 420)
+  }
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+
+    const startX = e.clientX
+    const startWidth = bodyRef.current
+      ? (dossiBoardWidth ?? bodyRef.current.offsetWidth * 0.62)
+      : (dossiBoardWidth ?? window.innerWidth * 0.62)
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const onMouseMove = (ev: MouseEvent) => {
+      const bodyWidth = bodyRef.current?.offsetWidth ?? window.innerWidth
+      const newWidth = Math.min(
+        Math.max(startWidth + (ev.clientX - startX), 600),
+        bodyWidth - 600,
+      )
+      setDossiBoardWidth(newWidth)
+    }
+
+    const onMouseUp = () => {
+      setIsResizing(false)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
   }
 
   // Panel is wide during opening + open; starts collapsing the moment closing begins
@@ -415,9 +450,12 @@ export default function ProjectPage() {
 
       <div className={styles.divider} />
 
-      <div className={styles.body}>
+      <div className={styles.body} ref={bodyRef}>
         {/* ── Left panel ── */}
-        <aside className={`${styles.leftPanel} ${dossiBoardExpanded ? styles.leftPanelExpanded : ''} ${dossiBoardState === 'open' ? styles.leftPanelOpen : ''}`}>
+        <aside
+          className={`${styles.leftPanel} ${dossiBoardExpanded ? styles.leftPanelExpanded : ''} ${dossiBoardState === 'open' ? styles.leftPanelOpen : ''} ${isResizing ? styles.leftPanelResizing : ''}`}
+          style={dossiBoardExpanded && dossiBoardWidth !== null ? { width: dossiBoardWidth, minWidth: dossiBoardWidth } : undefined}
+        >
           {/* Normal content — fades out as board opens */}
           <div className={`${styles.panelNormal} ${dossiBoardState === 'open' || dossiBoardState === 'opening' ? styles.panelNormalHidden : ''}`}>
           {/* Tab bar */}
@@ -571,6 +609,15 @@ export default function ProjectPage() {
             <div className={`${styles.dossiBoardExpanded} ${dossiBoardVisible ? styles.dossiBoardExpandedVisible : ''}`}>
               <DossiBoard projectId={id!} onCollapse={closeDossiBoard} />
             </div>
+          )}
+
+          {/* Resize handle — only visible when board is open */}
+          {dossiBoardState === 'open' && (
+            <div
+              className={`${styles.resizeHandle} ${isResizing ? styles.resizeHandleActive : ''}`}
+              onMouseDown={handleResizeMouseDown}
+              aria-label="Resize Dossi Board"
+            />
           )}
         </aside>
 
