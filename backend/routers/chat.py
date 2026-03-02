@@ -27,6 +27,7 @@ class MessageOut(BaseModel):
 class SendMessageRequest(BaseModel):
     content: str
     agent: str
+    image_url: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -68,8 +69,11 @@ async def send_message(
     # Snapshot history for this agent before saving the new message
     history = [m for m in project.messages if m.agent == body.agent]
 
-    # Save the user message
-    user_msg = ChatMessage(project_id=project_id, role="user", content=body.content, agent=body.agent)
+    # Save the user message — if image-only, store a placeholder so content is non-empty
+    stored_content = body.content.strip()
+    if not stored_content and body.image_url:
+        stored_content = "[Image]"
+    user_msg = ChatMessage(project_id=project_id, role="user", content=stored_content, agent=body.agent)
     db.add(user_msg)
     db.flush()
 
@@ -79,6 +83,7 @@ async def send_message(
         project=project,
         history=history,
         agent=body.agent,
+        image_url=body.image_url,
     )
 
     client = AsyncOpenAI(api_key=api_key)

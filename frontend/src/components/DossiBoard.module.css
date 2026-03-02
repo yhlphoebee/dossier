@@ -122,7 +122,11 @@
   flex-shrink: 0;
   border-radius: 4px;
   overflow: hidden;
-  cursor: default;
+  cursor: grab;
+}
+
+.tile:active {
+  cursor: grabbing;
 }
 
 .tileImg {

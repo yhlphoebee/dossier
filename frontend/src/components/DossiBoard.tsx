@@ -295,9 +295,17 @@ function ImageTile({ item, onDelete }: ImageTileProps) {
     ? item.file_path.slice('asset:'.length)
     : `/uploads/dossi_board/${item.file_path}`
 
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.effectAllowed = 'copy'
+    e.dataTransfer.setData('application/dossiboard-image-src', src)
+    e.dataTransfer.setData('application/dossiboard-image-name', item.filename)
+  }
+
   return (
     <div
       className={styles.tile}
+      draggable
+      onDragStart={handleDragStart}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

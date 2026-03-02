@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from models import Project, ChatMessage
 
 logger = logging.getLogger("dossier.prompt")
@@ -490,12 +491,13 @@ def build_messages(
     project: Project,
     history: list[ChatMessage],
     agent: str = "",
+    image_url: Optional[str] = None,
 ) -> list[dict]:
     """
     Build the full OpenAI messages array:
       - system: role + project context + agent prompt
       - user/assistant: real alternating turns from DB history
-      - user: the new message
+      - user: the new message (with optional image)
     Logs the full payload for debugging.
     """
     system_prompt = build_system_prompt(project, agent)
@@ -504,7 +506,19 @@ def build_messages(
     for msg in history:
         if msg.content and msg.content.strip():
             messages.append({"role": msg.role, "content": msg.content})
-    messages.append({"role": "user", "content": new_message})
+
+    # Build the final user message — multimodal if an image was provided
+    if image_url:
+        user_content: list[dict] = []
+        if new_message and new_message.strip():
+            user_content.append({"type": "text", "text": new_message.strip()})
+        user_content.append({
+            "type": "image_url",
+            "image_url": {"url": image_url, "detail": "high"},
+        })
+        messages.append({"role": "user", "content": user_content})
+    else:
+        messages.append({"role": "user", "content": new_message})
 
     # ── Debug log ──────────────────────────────────────────────────────────────
     history_log = "\n".join(

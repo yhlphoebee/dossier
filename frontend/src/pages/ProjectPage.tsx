@@ -139,6 +139,8 @@ export default function ProjectPage() {
   })
   const [input, setInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
+  const [droppedImage, setDroppedImage] = useState<{ src: string; name: string } | null>(null)
+  const [chatInputDragOver, setChatInputDragOver] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
   const titleSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -377,24 +379,49 @@ export default function ProjectPage() {
 
   const handleSend = async () => {
     const text = input.trim()
-    if (!text || chatLoading) return
+    if ((!text && !droppedImage) || chatLoading) return
 
     const agent = TAB_KEYS[activeTab]
+    const imageToSend = droppedImage
+
+    // Convert dropped image to base64 if present
+    let imageBase64: string | null = null
+    if (imageToSend) {
+      try {
+        const imgRes = await fetch(imageToSend.src)
+        const blob = await imgRes.blob()
+        imageBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(blob)
+        })
+      } catch {
+        // If image fetch fails, proceed without it
+      }
+    }
+
+    const displayContent = text || (imageToSend ? `[Image: ${imageToSend.name}]` : '')
 
     // Optimistically show the user message immediately
-    const optimisticUser: ChatMessage = { role: 'user', content: text }
+    const optimisticUser: ChatMessage = { role: 'user', content: displayContent }
     setMessagesByAgent((prev) => ({
       ...prev,
       [agent]: [...prev[agent], optimisticUser],
     }))
     setInput('')
+    setDroppedImage(null)
     setChatLoading(true)
 
     try {
       const res = await fetch(`/api/projects/${id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text, agent }),
+        body: JSON.stringify({
+          content: text || ' ',
+          agent,
+          ...(imageBase64 ? { image_url: imageBase64 } : {}),
+        }),
       })
       if (!res.ok) throw new Error('Chat failed')
       const data = await res.json()
@@ -424,6 +451,29 @@ export default function ProjectPage() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+    }
+  }
+
+  const handleChatInputDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setChatInputDragOver(false)
+    const src = e.dataTransfer.getData('application/dossiboard-image-src')
+    const name = e.dataTransfer.getData('application/dossiboard-image-name')
+    if (src) {
+      setDroppedImage({ src, name: name || 'image' })
+    }
+  }
+
+  const handleChatInputDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/dossiboard-image-src')) {
+      e.preventDefault()
+      setChatInputDragOver(true)
+    }
+  }
+
+  const handleChatInputDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setChatInputDragOver(false)
     }
   }
 
@@ -654,28 +704,54 @@ export default function ProjectPage() {
           </div>
 
           {/* Chat input bar */}
-          <div className={styles.chatInputBar}>
-            <textarea
-              ref={chatInputRef}
-              className={styles.chatInput}
-              placeholder="Ask anything"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={chatLoading}
-              rows={1}
-              aria-label="Chat message"
-            />
-            <button
-              className={styles.sendBtn}
-              onClick={handleSend}
-              disabled={chatLoading || !input.trim()}
-              aria-label="Send"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M10 17V3M10 3L4 9M10 3L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+          <div
+            className={`${styles.chatInputBar} ${chatInputDragOver ? styles.chatInputBarDragOver : ''}`}
+            onDrop={handleChatInputDrop}
+            onDragOver={handleChatInputDragOver}
+            onDragLeave={handleChatInputDragLeave}
+          >
+            {droppedImage && (
+              <div className={styles.imagePreviewRow}>
+                <div className={styles.imagePreviewWrap}>
+                  <img src={droppedImage.src} alt={droppedImage.name} className={styles.imagePreview} />
+                  <button
+                    className={styles.imagePreviewRemove}
+                    onClick={() => setDroppedImage(null)}
+                    aria-label="Remove image"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M1 1l8 8M9 1L1 9" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            {chatInputDragOver && !droppedImage && (
+              <div className={styles.chatDropHint}>Drop image here</div>
+            )}
+            <div className={styles.chatInputRow}>
+              <textarea
+                ref={chatInputRef}
+                className={styles.chatInput}
+                placeholder={droppedImage ? 'Add a message (optional)…' : 'Ask anything'}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={chatLoading}
+                rows={1}
+                aria-label="Chat message"
+              />
+              <button
+                className={styles.sendBtn}
+                onClick={handleSend}
+                disabled={chatLoading || (!input.trim() && !droppedImage)}
+                aria-label="Send"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 17V3M10 3L4 9M10 3L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
           </div>
         </main>
       </div>
