@@ -163,26 +163,11 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
             </div>
           </div>
         ) : (
-          <div className={styles.grid}>
-            {tabItems.map((item) => (
-              <ImageTile
-                key={item.id}
-                item={item}
-                onDelete={() => deleteItem(item.id)}
-              />
-            ))}
-
-            {/* Add more tile */}
-            <button
-              className={styles.addTile}
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Add more files"
-            >
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <path d="M14 5v18M5 14h18" stroke="#c0c0c0" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
+          <MasonryGrid
+            items={tabItems}
+            onDelete={deleteItem}
+            onAddMore={() => fileInputRef.current?.click()}
+          />
         )}
 
         {uploading && (
@@ -225,6 +210,56 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
   )
 }
 
+// ── Masonry grid ─────────────────────────────────────────────────────────────
+
+const NUM_COLS = 3
+
+function distributeColumns(items: DossiBoardItem[]): DossiBoardItem[][] {
+  const cols: DossiBoardItem[][] = Array.from({ length: NUM_COLS }, () => [])
+  items.forEach((item, i) => cols[i % NUM_COLS].push(item))
+  return cols
+}
+
+interface MasonryGridProps {
+  items: DossiBoardItem[]
+  onDelete: (id: string) => void
+  onAddMore: () => void
+}
+
+function MasonryGrid({ items, onDelete, onAddMore }: MasonryGridProps) {
+  const columns = distributeColumns(items)
+
+  return (
+    <div className={styles.masonryGrid}>
+      {columns.map((col, ci) => (
+        <div key={ci} className={styles.masonryColumn}>
+          {col.map((item) => (
+            <ImageTile
+              key={item.id}
+              item={item}
+              onDelete={() => onDelete(item.id)}
+            />
+          ))}
+          {/* Add more tile sits at the bottom of the first column */}
+          {ci === 0 && (
+            <button
+              className={styles.addTile}
+              onClick={onAddMore}
+              aria-label="Add more files"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 4v16M4 12h16" stroke="#c0c0c0" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Image tile ────────────────────────────────────────────────────────────────
+
 interface ImageTileProps {
   item: DossiBoardItem
   onDelete: () => void
@@ -232,8 +267,8 @@ interface ImageTileProps {
 
 function ImageTile({ item, onDelete }: ImageTileProps) {
   const [hovered, setHovered] = useState(false)
-  // Asset references are stored as "asset:<url>" — use the URL directly.
-  // Uploaded files are served from /uploads/dossi_board/<relative_path>.
+  // asset: prefix = Vite-bundled local asset (from VisualExplorationBoard "add to project")
+  // anything else = file uploaded directly to the backend's /uploads/dossi_board/
   const src = item.file_path.startsWith('asset:')
     ? item.file_path.slice('asset:'.length)
     : `/uploads/dossi_board/${item.file_path}`
@@ -245,6 +280,7 @@ function ImageTile({ item, onDelete }: ImageTileProps) {
       onMouseLeave={() => setHovered(false)}
     >
       <img src={src} alt={item.filename} className={styles.tileImg} draggable={false} />
+      {hovered && <div className={styles.tileOverlay} />}
       {hovered && (
         <button
           className={styles.deleteBtn}
