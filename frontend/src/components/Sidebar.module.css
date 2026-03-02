@@ -7,7 +7,43 @@
   justify-content: space-between;
   background-color: var(--color-nav-bg);
   position: relative;
+  transition: width 0.25s ease;
 }
+
+/* ── Collapsed sidebar ── */
+.sidebarCollapsed {
+  width: 48px;
+  min-width: 48px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-accent-cyan);
+  flex-shrink: 0;
+  padding: 16px 0 24px;
+}
+
+.collapsedLogo {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-black);
+  line-height: 1;
+}
+
+.expandBtn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  letter-spacing: 0.5px;
+}
+
 
 .top {
   flex: 1;
@@ -17,7 +53,7 @@
 /* ── Logo ── */
 .logo {
   font-family: var(--font-display);
-  font-size: 130px;
+  font-size: 96px;
   font-weight: 400;
   line-height: 1;
   color: var(--color-black);
@@ -185,4 +221,22 @@
   width: 111px;
   background-color: var(--color-accent-cyan);
   flex-shrink: 0;
+}
+
+/* Cyan square that also acts as the collapse button */
+.footerAccentBtn {
+  width: 111px;
+  background-color: var(--color-accent-cyan);
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background-color 0.15s;
+}
+
+.footerAccentBtn:hover {
+  background-color: #6fd8ef;
 }

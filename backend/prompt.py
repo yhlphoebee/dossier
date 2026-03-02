@@ -304,6 +304,22 @@ def build_system_prompt(project: Project, agent: str = "") -> str:
         context_block = "\n\nProject context:\n" + "\n".join(context_lines)
         base += context_block
 
+    # Inject other agents' detail summaries as shared context
+    all_detail_summaries = {
+        "strategy": project.strategy_detail_summary or "",
+        "research": project.research_detail_summary or "",
+        "concept": project.concept_detail_summary or "",
+        "present": project.present_detail_summary or "",
+    }
+    current_agent = (agent or "").lower()
+    summary_blocks: list[str] = []
+    for key, detail in all_detail_summaries.items():
+        if key == current_agent or not detail.strip():
+            continue
+        summary_blocks.append(f"[{key.upper()} SUMMARY]\n{detail.strip()}")
+    if summary_blocks:
+        base += "\n\nShared case file from other agents:\n" + "\n\n".join(summary_blocks)
+
     # Add agent-specific prompt
     agent_prompt = _select_system_prompt(agent)
     if agent_prompt:
@@ -486,7 +502,8 @@ def build_messages(
 
     messages: list[dict] = [{"role": "system", "content": system_prompt}]
     for msg in history:
-        messages.append({"role": msg.role, "content": msg.content})
+        if msg.content and msg.content.strip():
+            messages.append({"role": msg.role, "content": msg.content})
     messages.append({"role": "user", "content": new_message})
 
     # ── Debug log ──────────────────────────────────────────────────────────────

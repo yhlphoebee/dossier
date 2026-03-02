@@ -1,4 +1,5 @@
 import os
+from typing import Optional, List, Dict
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -35,8 +36,8 @@ class ChatResponse(BaseModel):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-@router.get("/projects/{project_id}/messages", response_model=list[MessageOut])
-def get_messages(project_id: str, agent: str | None = None, db: Session = Depends(get_db)):
+@router.get("/projects/{project_id}/messages", response_model=List[MessageOut])
+def get_messages(project_id: str, agent: Optional[str] = None, db: Session = Depends(get_db)):
     project = db.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -83,15 +84,19 @@ async def send_message(
     client = AsyncOpenAI(api_key=api_key)
     try:
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.2",
             messages=openai_messages,
-            max_tokens=1024,
+            max_completion_tokens=3000,
             temperature=0.7,
         )
-        reply_text = response.choices[0].message.content or ""
+        reply_text = (response.choices[0].message.content or "").strip()
     except OpenAIError as e:
         db.rollback()
         raise HTTPException(status_code=502, detail=str(e))
+
+    if not reply_text:
+        db.rollback()
+        raise HTTPException(status_code=502, detail="Model returned an empty response.")
 
     # Save the assistant reply
     assistant_msg = ChatMessage(project_id=project_id, role="assistant", content=reply_text, agent=body.agent)
@@ -130,7 +135,7 @@ async def summarize_agent(
     history = [m for m in project.messages if m.agent == agent]
 
     # Collect all agents' detail summaries for cross-agent context
-    all_detail_summaries: dict[str, str] = {
+    all_detail_summaries: Dict[str, str] = {
         "strategy": project.strategy_detail_summary or "",
         "research": project.research_detail_summary or "",
         "concept": project.concept_detail_summary or "",
@@ -156,12 +161,12 @@ async def summarize_agent(
 
     try:
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.2",
             messages=[
                 {"role": "system", "content": base_prompt.strip()},
                 {"role": "user", "content": user_prompt},
             ],
-            max_tokens=768,
+            max_completion_tokens=3000,
             temperature=0.4,
         )
         raw = response.choices[0].message.content or ""

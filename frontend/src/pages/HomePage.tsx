@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Sidebar, { type FilterCategory } from '../components/Sidebar'
 import ProjectCard from '../components/ProjectCard'
 import DeleteModal from '../components/DeleteModal'
+import VisualExplorationBoard from '../components/VisualExplorationBoard'
 import styles from './HomePage.module.css'
 
 type TabOption = 'My Project' | 'Archived'
@@ -127,6 +128,8 @@ export default function HomePage() {
     }
   }
 
+  const visualExplorationOn = filters[0]?.enabled ?? false
+
   return (
     <div className={styles.layout}>
       <Sidebar
@@ -134,65 +137,70 @@ export default function HomePage() {
         onSearchChange={setSearchQuery}
         filters={filters}
         onToggleFilter={toggleFilter}
+        collapsible={visualExplorationOn}
       />
 
-      <main className={styles.main}>
-        {/* Top bar */}
-        <div className={styles.topBar}>
-          <div className={styles.tabs}>
-            {(['My Project', 'Archived'] as TabOption[]).map((tab) => (
-              <div key={tab} className={styles.tabWrapper}>
-                <button
-                  className={`${styles.tab} ${activeTab === tab ? styles.tabActive : styles.tabInactive}`}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-                <div
-                  className={`${styles.tabIndicator} ${activeTab === tab ? styles.tabIndicatorActive : ''}`}
+      {visualExplorationOn ? (
+        <VisualExplorationBoard searchQuery={searchQuery} />
+      ) : (
+        <main className={styles.main}>
+          {/* Top bar */}
+          <div className={styles.topBar}>
+            <div className={styles.tabs}>
+              {(['My Project', 'Archived'] as TabOption[]).map((tab) => (
+                <div key={tab} className={styles.tabWrapper}>
+                  <button
+                    className={`${styles.tab} ${activeTab === tab ? styles.tabActive : styles.tabInactive}`}
+                    onClick={() => setActiveTab(tab)}
+                  >
+                    {tab}
+                  </button>
+                  <div
+                    className={`${styles.tabIndicator} ${activeTab === tab ? styles.tabIndicatorActive : ''}`}
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              className={styles.newProjectBtn}
+              onClick={handleNewProject}
+              disabled={creating}
+            >
+              {creating ? 'Creating…' : '+ New Project'}
+            </button>
+          </div>
+
+          <div className={styles.divider} />
+
+          {/* Project grid */}
+          {loading ? (
+            <div className={styles.loading}>Loading…</div>
+          ) : projects.length === 0 ? (
+            <div className={styles.emptyState}>
+              {activeTab === 'Archived'
+                ? 'No archived projects.'
+                : 'Click New Project to Start Discovering…'}
+            </div>
+          ) : filteredProjects.length === 0 ? (
+            <div className={styles.emptyState}>
+              No projects match your search.
+            </div>
+          ) : (
+            <div className={styles.projectGrid}>
+              {filteredProjects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  onClick={() => navigate(`/project/${project.id}`)}
+                  onDelete={() => setDeleteTarget(project)}
+                  onArchive={activeTab === 'My Project' ? () => handleArchive(project) : undefined}
+                  onRestore={activeTab === 'Archived' ? () => handleRestore(project) : undefined}
                 />
-              </div>
-            ))}
-          </div>
-          <button
-            className={styles.newProjectBtn}
-            onClick={handleNewProject}
-            disabled={creating}
-          >
-            {creating ? 'Creating…' : '+ New Project'}
-          </button>
-        </div>
-
-        <div className={styles.divider} />
-
-        {/* Project grid */}
-        {loading ? (
-          <div className={styles.loading}>Loading…</div>
-        ) : projects.length === 0 ? (
-          <div className={styles.emptyState}>
-            {activeTab === 'Archived'
-              ? 'No archived projects.'
-              : 'Click New Project to Start Discovering…'}
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <div className={styles.emptyState}>
-            No projects match your search.
-          </div>
-        ) : (
-          <div className={styles.projectGrid}>
-            {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onClick={() => navigate(`/project/${project.id}`)}
-                onDelete={() => setDeleteTarget(project)}
-                onArchive={activeTab === 'My Project' ? () => handleArchive(project) : undefined}
-                onRestore={activeTab === 'Archived' ? () => handleRestore(project) : undefined}
-              />
-            ))}
-          </div>
-        )}
-      </main>
+              ))}
+            </div>
+          )}
+        </main>
+      )}
 
       {deleteTarget && (
         <DeleteModal

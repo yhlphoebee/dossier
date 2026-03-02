@@ -381,7 +381,14 @@ export default function ProjectPage() {
         <button className={styles.logoLink} onClick={() => navigate('/')}>
           Dossier
         </button>
-        <span className={styles.projectTitle}>{displayTitle}</span>
+        <input
+          className={`${styles.projectTitle} ${styles.projectTitleInput}`}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Untitled"
+          size={Math.max(8, (title || 'Untitled').length + 1)}
+          aria-label="Project title"
+        />
       </header>
 
       <div className={styles.divider} />

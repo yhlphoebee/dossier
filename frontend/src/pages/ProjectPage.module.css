@@ -40,6 +40,27 @@
   color: var(--color-text-muted);
 }
 
+.projectTitleInput {
+  background: none;
+  border: none;
+  outline: none;
+  text-align: right;
+  caret-color: var(--color-text-muted);
+  min-width: 0;
+  max-width: 320px;
+  width: auto;
+  transition: color 0.15s;
+}
+
+.projectTitleInput::placeholder {
+  color: #d0d0d0;
+}
+
+.projectTitleInput:hover,
+.projectTitleInput:focus {
+  color: var(--color-text-primary);
+}
+
 .divider {
   height: 1px;
   background-color: var(--color-divider);
