@@ -73,6 +73,7 @@ class DossiBoardItem(Base):
     file_path: Mapped[str] = mapped_column(String, nullable=False)  # relative path stored in DB
     filename: Mapped[str] = mapped_column(String, nullable=False)   # original filename for display
     label: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # optional user-set label
+    source_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # original URL for website items
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     project: Mapped["Project"] = relationship("Project", back_populates="dossi_board_items")

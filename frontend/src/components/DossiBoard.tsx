@@ -10,6 +10,7 @@ interface DossiBoardItem {
   file_path: string
   filename: string
   label: string | null
+  source_url: string | null
   created_at: string
 }
 
@@ -112,6 +113,8 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
     { images: 0, typefaces: 0, websites: 0 }
   )
 
+  const isWebsitesTab = activeTab === 'websites'
+
   return (
     <div className={styles.container}>
       {/* Tab bar */}
@@ -146,10 +149,11 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
         ) : tabItems.length === 0 ? (
           <div
             className={styles.emptyState}
-            onClick={() => fileInputRef.current?.click()}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
+            onClick={isWebsitesTab ? undefined : () => fileInputRef.current?.click()}
+            role={isWebsitesTab ? undefined : 'button'}
+            tabIndex={isWebsitesTab ? undefined : 0}
+            onKeyDown={isWebsitesTab ? undefined : (e) => e.key === 'Enter' && fileInputRef.current?.click()}
+            style={isWebsitesTab ? { cursor: 'default' } : undefined}
           >
             <div className={styles.dropHint}>
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -157,16 +161,18 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
                 <path d="M20 13v14M13 20h14" stroke="#c0c0c0" strokeWidth="2" strokeLinecap="round" />
               </svg>
               <p className={styles.dropHintText}>
-                {dragOver ? 'Drop to add' : 'Drag & drop files here'}
+                {isWebsitesTab
+                  ? 'References from the Researcher will appear here'
+                  : dragOver ? 'Drop to add' : 'Drag & drop files here'}
               </p>
-              <p className={styles.dropHintSub}>or click to browse</p>
+              {!isWebsitesTab && <p className={styles.dropHintSub}>or click to browse</p>}
             </div>
           </div>
         ) : (
           <MasonryGrid
             items={tabItems}
             onDelete={deleteItem}
-            onAddMore={() => fileInputRef.current?.click()}
+            onAddMore={isWebsitesTab ? undefined : () => fileInputRef.current?.click()}
           />
         )}
 
@@ -229,7 +235,7 @@ function columnCountForWidth(width: number): number {
 interface MasonryGridProps {
   items: DossiBoardItem[]
   onDelete: (id: string) => void
-  onAddMore: () => void
+  onAddMore?: () => void
 }
 
 function MasonryGrid({ items, onDelete, onAddMore }: MasonryGridProps) {
@@ -254,15 +260,23 @@ function MasonryGrid({ items, onDelete, onAddMore }: MasonryGridProps) {
     <div ref={gridRef} className={styles.masonryGrid}>
       {columns.map((col, ci) => (
         <div key={ci} className={styles.masonryColumn}>
-          {col.map((item) => (
-            <ImageTile
-              key={item.id}
-              item={item}
-              onDelete={() => onDelete(item.id)}
-            />
-          ))}
+          {col.map((item) =>
+            item.folder === 'websites' ? (
+              <WebsiteTile
+                key={item.id}
+                item={item}
+                onDelete={() => onDelete(item.id)}
+              />
+            ) : (
+              <ImageTile
+                key={item.id}
+                item={item}
+                onDelete={() => onDelete(item.id)}
+              />
+            )
+          )}
           {/* Add more tile sits at the bottom of the first column */}
-          {ci === 0 && (
+          {ci === 0 && onAddMore && (
             <button
               className={styles.addTile}
               onClick={onAddMore}
@@ -322,6 +336,78 @@ function ImageTile({ item, onDelete }: ImageTileProps) {
         </button>
       )}
       {item.label && <span className={styles.tileLabel}>{item.label}</span>}
+    </div>
+  )
+}
+
+// ── Website tile ──────────────────────────────────────────────────────────────
+
+interface WebsiteTileProps {
+  item: DossiBoardItem
+  onDelete: () => void
+}
+
+function WebsiteTile({ item, onDelete }: WebsiteTileProps) {
+  const [hovered, setHovered] = useState(false)
+  const [imgError, setImgError] = useState(false)
+
+  // file_path is "url:<screenshot-url>" for website items
+  const thumbnailSrc = item.file_path.startsWith('url:')
+    ? item.file_path.slice('url:'.length)
+    : null
+
+  const href = item.source_url || thumbnailSrc || '#'
+  const domain = (() => {
+    try { return new URL(href).hostname.replace(/^www\./, '') } catch { return href }
+  })()
+
+  return (
+    <div
+      className={`${styles.tile} ${styles.websiteTile}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.websiteTileLink}
+        tabIndex={0}
+      >
+        {thumbnailSrc && !imgError ? (
+          <img
+            src={thumbnailSrc}
+            alt={item.label || domain}
+            className={styles.tileImg}
+            draggable={false}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className={styles.websiteFallback}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#c0c0c0" strokeWidth="1.5" />
+              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="#c0c0c0" strokeWidth="1.5" />
+            </svg>
+            <span className={styles.websiteFallbackDomain}>{domain}</span>
+          </div>
+        )}
+        {hovered && <div className={styles.tileOverlay} />}
+        <div className={styles.websiteLabel}>
+          <span className={styles.websiteLabelTitle}>{item.label || domain}</span>
+          <span className={styles.websiteLabelDomain}>{domain}</span>
+        </div>
+      </a>
+      {hovered && (
+        <button
+          className={styles.deleteBtn}
+          onClick={(e) => { e.preventDefault(); onDelete() }}
+          aria-label={`Remove ${item.filename}`}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 2l10 10M12 2L2 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

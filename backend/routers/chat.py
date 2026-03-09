@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import httpx
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ValidationError
@@ -9,7 +10,7 @@ from datetime import datetime
 from openai import AsyncOpenAI, OpenAI, OpenAIError
 
 from database import get_db
-from models import Project, ChatMessage
+from models import Project, ChatMessage, DossiBoardItem
 from prompt import build_messages, build_summary_prompt, base_prompt
 
 router = APIRouter()
@@ -97,6 +98,57 @@ def _messages_to_responses_input(messages: List[dict]) -> List[dict]:
                         parts.append({"type": "input_image", "image_url": url, "detail": "high"})
             out.append({"role": role, "content": parts if parts else ""})
     return out
+
+
+async def _fetch_thumbnail_url(url: str) -> str:
+    """Return a microlink screenshot URL for the given page, or fall back to url:<url>."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                "https://api.microlink.io",
+                params={"url": url, "screenshot": "true", "meta": "false"},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                screenshot = (data.get("data") or {}).get("screenshot") or {}
+                fetched = screenshot.get("url") if isinstance(screenshot, dict) else None
+                if fetched:
+                    return f"url:{fetched}"
+    except Exception:
+        pass
+    return f"url:{url}"
+
+
+async def _save_references_to_dossi_board(
+    project_id: str,
+    references: List[ResearchReference],
+    db: Session,
+) -> None:
+    """Persist research references as website items in the dossi board."""
+    tasks = [_fetch_thumbnail_url(ref.url) for ref in references]
+    thumbnails = await asyncio.gather(*tasks)
+
+    for ref, thumbnail in zip(references, thumbnails):
+        # Skip duplicates already saved for this project
+        existing = db.query(DossiBoardItem).filter(
+            DossiBoardItem.project_id == project_id,
+            DossiBoardItem.source_url == ref.url,
+        ).first()
+        if existing:
+            continue
+
+        label = ref.title or ref.url
+        item = DossiBoardItem(
+            project_id=project_id,
+            folder="websites",
+            file_path=thumbnail,
+            filename=label,
+            label=label,
+            source_url=ref.url,
+        )
+        db.add(item)
+
+    db.flush()
 
 
 def _extract_citations_from_response_output(output: Any) -> Optional[List[CitationOut]]:
@@ -216,17 +268,41 @@ async def send_message(
             # Build final answer + inline reference section
             answer_text = (parsed.answer or "").strip()
             if parsed.references:
-                lines: List[str] = [answer_text, "", "References:"]
+                ref_lines = ["References:"]
                 for idx, ref in enumerate(parsed.references, start=1):
                     label = ref.title or ref.url
                     note = f" – {ref.note}" if ref.note else ""
-                    lines.append(f"{idx}. [{label}]({ref.url}){note}")
-                answer_text = "\n\n".join(lines)
+                    ref_lines.append(f"{idx}. [{label}]({ref.url}){note}")
+                answer_text = answer_text + "\n\n" + "\n".join(ref_lines)
 
             reply_text = answer_text
             output = getattr(response, "output", None)
             if output is not None:
                 citations = _extract_citations_from_response_output(output)
+
+            # Deduplicate citations by URL and append as a References block so they persist in the DB
+            if citations:
+                seen: set = set()
+                unique_citations: List[CitationOut] = []
+                for c in citations:
+                    if c.url not in seen:
+                        seen.add(c.url)
+                        unique_citations.append(c)
+                citations = unique_citations
+
+                ref_lines = ["References:"]
+                for idx, c in enumerate(citations, start=1):
+                    label = c.title or c.url
+                    ref_lines.append(f"{idx}. [{label}]({c.url})")
+                reply_text = reply_text + "\n\n" + "\n".join(ref_lines)
+
+            # Also auto-save from parsed structured references if the model returned them
+            if parsed.references:
+                await _save_references_to_dossi_board(project_id, parsed.references, db)
+            elif citations:
+                # Fall back to saving from url_citation annotations
+                ref_objs = [ResearchReference(title=c.title or c.url, url=c.url) for c in citations]
+                await _save_references_to_dossi_board(project_id, ref_objs, db)
         else:
             # Chat Completions for non-Research agents
             client = AsyncOpenAI(api_key=api_key)

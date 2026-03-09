@@ -47,6 +47,32 @@ interface ChatMessage {
   image_src?: string  // client-only alias; populated from image_url on load
   citations?: Citation[]  // web search sources (Research agent); only on newly received messages
   web_search_used?: boolean  // true when this reply used the web-search model
+  bodyContent?: string  // content with the References block stripped out
+}
+
+/**
+ * Splits a stored research-agent message into the main body and a citations array.
+ * Looks for a trailing "\n\nReferences:\n1. [title](url)" block.
+ */
+function parseReferencesFromContent(content: string): { body: string; citations: Citation[] } {
+  // Find the LAST occurrence of a standalone "References:" line followed by numbered links.
+  // We look for "\n\nReferences:\n1. [" so we don't accidentally match "Confirmed References:" in the body.
+  const marker = '\n\nReferences:\n'
+  const markerIdx = content.lastIndexOf(marker)
+  if (markerIdx === -1) return { body: content, citations: [] }
+
+  const refBlock = content.slice(markerIdx + marker.length)
+  const citations: Citation[] = []
+
+  for (const line of refBlock.split('\n')) {
+    // Match: "1. [title](url)" or "1. [title](url) – note"
+    const m = line.match(/^\d+\.\s+\[([^\]]*)\]\(([^)]+)\)/)
+    if (m) citations.push({ title: m[1] || m[2], url: m[2] })
+  }
+
+  if (citations.length === 0) return { body: content, citations: [] }
+
+  return { body: content.slice(0, markerIdx).trim(), citations }
 }
 
 type AgentKey = 'strategy' | 'research' | 'concept' | 'present'
@@ -231,14 +257,27 @@ export default function ProjectPage() {
           )
         )
 
-        const hydrate = (msgs: ChatMessage[]) =>
-          msgs.map((m) => ({ ...m, image_src: m.image_url ?? m.image_src }))
+        const hydrate = (msgs: ChatMessage[], agent: AgentKey) =>
+          msgs.map((m) => {
+            const base = { ...m, image_src: m.image_url ?? m.image_src }
+            if (agent === 'research' && m.role === 'assistant') {
+              const markerIdx = m.content.lastIndexOf('\n\nReferences:\n')
+              console.log(`[hydrate] id=${m.id} markerIdx=${markerIdx} contentLen=${m.content.length} hasCitations=${!!m.citations}`)
+              if (markerIdx !== -1) {
+                console.log(`[hydrate] refBlock preview:`, JSON.stringify(m.content.slice(markerIdx, markerIdx + 120)))
+              }
+              const { body, citations } = parseReferencesFromContent(m.content)
+              console.log(`[hydrate] parsed citations count:`, citations.length, citations.slice(0, 2))
+              return { ...base, bodyContent: body, citations: citations.length > 0 ? citations : undefined }
+            }
+            return base
+          })
 
         setMessagesByAgent({
-          strategy: hydrate(histories[0] ?? []),
-          research: hydrate(histories[1] ?? []),
-          concept: hydrate(histories[2] ?? []),
-          present: hydrate(histories[3] ?? []),
+          strategy: hydrate(histories[0] ?? [], 'strategy'),
+          research: hydrate(histories[1] ?? [], 'research'),
+          concept: hydrate(histories[2] ?? [], 'concept'),
+          present: hydrate(histories[3] ?? [], 'present'),
         })
       })
       .catch(() => navigate('/'))
@@ -444,12 +483,17 @@ export default function ProjectPage() {
       if (!res.ok) throw new Error('Chat failed')
       const data = await res.json()
       // Replace the optimistic user message with the persisted one, then add assistant reply (with citations if any)
+      const assistantMsg: ChatMessage = { ...data.assistant_message, citations: data.citations ?? undefined, web_search_used: data.web_search_used }
+      if (agent === 'research' && assistantMsg.role === 'assistant') {
+        const { body } = parseReferencesFromContent(assistantMsg.content)
+        assistantMsg.bodyContent = body
+      }
       setMessagesByAgent((prev) => ({
         ...prev,
         [agent]: [
           ...prev[agent].slice(0, -1),
           { ...data.user_message, image_src: data.user_message.image_url ?? undefined },
-          { ...data.assistant_message, citations: data.citations ?? undefined, web_search_used: data.web_search_used },
+          assistantMsg,
         ],
       }))
     } catch {
@@ -710,7 +754,7 @@ export default function ProjectPage() {
                     {msg.role === 'assistant' ? (
                       <>
                         <div className={styles.chatMarkdown}>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.bodyContent ?? msg.content}</ReactMarkdown>
                         </div>
                         {(msg.web_search_used || (msg.citations && msg.citations.length > 0)) && (
                           <div className={styles.chatCitations}>
@@ -719,13 +763,14 @@ export default function ProjectPage() {
                             )}
                             {msg.citations && msg.citations.length > 0 && (
                               <>
-                                <span className={styles.chatCitationsLabel}>Sources:</span>
+                                <span className={styles.chatCitationsLabel}>References</span>
                                 <ul className={styles.chatCitationsList}>
                                   {msg.citations.map((c, j) => (
-                                    <li key={j}>
+                                    <li key={j} className={styles.chatCitationItem}>
                                       <a href={c.url} target="_blank" rel="noopener noreferrer" className={styles.chatCitationLink}>
                                         {c.title || c.url}
                                       </a>
+                                      <AddToBoardButton url={c.url} title={c.title} projectId={id!} />
                                     </li>
                                   ))}
                                 </ul>
@@ -804,5 +849,57 @@ export default function ProjectPage() {
         </main>
       </div>
     </div>
+  )
+}
+
+// ── Add-to-board button ───────────────────────────────────────────────────────
+
+interface AddToBoardButtonProps {
+  url: string
+  title?: string
+  projectId: string
+}
+
+function AddToBoardButton({ url, title, projectId }: AddToBoardButtonProps) {
+  const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (state !== 'idle') return
+    setState('saving')
+    try {
+      const res = await fetch(`/api/projects/${projectId}/dossi-board/from-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, title: title || url }),
+      })
+      setState(res.ok ? 'saved' : 'error')
+    } catch {
+      setState('error')
+    }
+    setTimeout(() => setState('idle'), 2500)
+  }
+
+  return (
+    <button
+      className={`${styles.addToBoardBtn} ${state === 'saved' ? styles.addToBoardBtnSaved : state === 'error' ? styles.addToBoardBtnError : ''}`}
+      onClick={handleClick}
+      title={state === 'saved' ? 'Saved to Dossi Board' : state === 'error' ? 'Already saved or error' : 'Save to Dossi Board'}
+      aria-label="Save to Dossi Board"
+    >
+      {state === 'saving' ? (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={styles.addToBoardSpinner}>
+          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="14 8" />
+        </svg>
+      ) : state === 'saved' ? (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      )}
+    </button>
   )
 }

@@ -1,6 +1,7 @@
 import uuid
 import os
 import shutil
+import httpx
 from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -28,6 +29,7 @@ class DossiBoardItemOut(BaseModel):
     file_path: str
     filename: str
     label: Optional[str]
+    source_url: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -147,6 +149,54 @@ def add_item_from_asset(
         file_path=stored_path,
         filename=body.filename,
         label=body.label,
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+class AddWebsiteRequest(BaseModel):
+    url: str
+    title: Optional[str] = None
+
+
+@router.post("/projects/{project_id}/dossi-board/from-url", response_model=DossiBoardItemOut, status_code=201)
+async def add_item_from_url(
+    project_id: str,
+    body: AddWebsiteRequest,
+    db: Session = Depends(get_db),
+):
+    """Save a website URL reference to the websites folder, with a thumbnail fetched via microlink."""
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Fetch screenshot thumbnail URL from microlink (free, no key needed)
+    thumbnail_url = f"url:{body.url}"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                "https://api.microlink.io",
+                params={"url": body.url, "screenshot": "true", "meta": "false"},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                screenshot = (data.get("data") or {}).get("screenshot") or {}
+                fetched = screenshot.get("url") if isinstance(screenshot, dict) else None
+                if fetched:
+                    thumbnail_url = f"url:{fetched}"
+    except Exception:
+        pass  # Fall back to storing the source URL itself
+
+    label = body.title or body.url
+    item = DossiBoardItem(
+        project_id=project_id,
+        folder="websites",
+        file_path=thumbnail_url,
+        filename=label,
+        label=label,
+        source_url=body.url,
     )
     db.add(item)
     db.commit()
