@@ -198,10 +198,9 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
             onClick={onCollapse}
             aria-label="Collapse Dossi Board"
           >
-            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
-              <circle cx="18" cy="18" r="17.5" stroke="#d0d0d0" />
-              <line x1="10" y1="26" x2="26" y2="10" stroke="#222" strokeWidth="1.8" strokeLinecap="round" />
-              <polyline points="10,10 26,10 26,26" stroke="#222" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+              <line x1="110" y1="10" x2="10" y2="110" stroke="#45DAF1" strokeWidth="10" strokeLinecap="round" />
+              <polyline points="118,110 10,110 10,2" stroke="#45DAF1" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </svg>
           </button>
         </div>

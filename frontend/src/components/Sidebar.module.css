@@ -27,7 +27,7 @@
 .collapsedLogo {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 450;
   color: var(--color-black);
   line-height: 1;
 }
@@ -35,7 +35,7 @@
 .expandBtn {
   font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-white);
   background: none;
   border: none;

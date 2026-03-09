@@ -42,7 +42,7 @@ interface ChatMessage {
 
 type AgentKey = 'strategy' | 'research' | 'concept' | 'present'
 
-const TABS = ['Strategy', 'Research', 'Concept', 'Present'] as const
+const TABS = ['Strategist', 'Researcher', 'Director', 'Presenter'] as const
 const TAB_KEYS: AgentKey[] = ['strategy', 'research', 'concept', 'present']
 const CLARITY_DOTS = 8
 
@@ -495,7 +495,7 @@ export default function ProjectPage() {
       {/* Top bar */}
       <header className={styles.header}>
         <button className={styles.logoLink} onClick={() => navigate('/')}>
-          Dossier
+          DOSSIER
         </button>
         <input
           className={`${styles.projectTitle} ${styles.projectTitleInput}`}

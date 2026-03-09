@@ -17,6 +17,7 @@ interface AddToProjectPickerProps {
 export default function AddToProjectPicker({ imageSrc, imageFilename, onClose }: AddToProjectPickerProps) {
   const [projects, setProjects] = useState<Project[]>([])
   const [adding, setAdding] = useState<string | null>(null)
+  const [removing, setRemoving] = useState<string | null>(null)
   const [added, setAdded] = useState<Set<string>>(new Set())
   const ref = useRef<HTMLDivElement>(null)
 
@@ -64,30 +65,47 @@ export default function AddToProjectPicker({ imageSrc, imageFilename, onClose }:
     return () => document.removeEventListener('mousedown', handler)
   }, [onClose])
 
-  const handleAdd = async (projectId: string) => {
-    if (adding || added.has(projectId)) return
-    setAdding(projectId)
-    try {
-      const filename = imageFilename || imageSrc.split('/').pop() || 'image.png'
-      await fetch(`/api/projects/${projectId}/dossi-board/from-asset`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          src_path: imageSrc,
-          filename,
-          folder: 'images',
-        }),
-      })
-      setAdded((prev) => new Set(prev).add(projectId))
-      setProjects((prev) =>
-        prev.map((p) =>
-          p.id === projectId ? { ...p, element_count: p.element_count + 1 } : p
+  const handleToggle = async (projectId: string) => {
+    if (adding === projectId || removing === projectId) return
+
+    if (added.has(projectId)) {
+      setRemoving(projectId)
+      try {
+        await fetch(
+          `/api/projects/${projectId}/dossi-board/from-asset?src_path=${encodeURIComponent(imageSrc)}`,
+          { method: 'DELETE' },
         )
-      )
-    } catch {
-      // silently fail
-    } finally {
-      setAdding(null)
+        setAdded((prev) => { const next = new Set(prev); next.delete(projectId); return next })
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === projectId ? { ...p, element_count: Math.max(0, p.element_count - 1) } : p
+          )
+        )
+      } catch {
+        // silently fail
+      } finally {
+        setRemoving(null)
+      }
+    } else {
+      setAdding(projectId)
+      try {
+        const filename = imageFilename || imageSrc.split('/').pop() || 'image.png'
+        await fetch(`/api/projects/${projectId}/dossi-board/from-asset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ src_path: imageSrc, filename, folder: 'images' }),
+        })
+        setAdded((prev) => new Set(prev).add(projectId))
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === projectId ? { ...p, element_count: p.element_count + 1 } : p
+          )
+        )
+      } catch {
+        // silently fail
+      } finally {
+        setAdding(null)
+      }
     }
   }
 
@@ -98,9 +116,9 @@ export default function AddToProjectPicker({ imageSrc, imageFilename, onClose }:
       ) : (
         projects.map((project) => {
           const isAdded = added.has(project.id)
-          const isLoading = adding === project.id
+          const isLoading = adding === project.id || removing === project.id
           return (
-            <div key={project.id} className={`${styles.row} ${isAdded ? styles.rowAdded : ''}`}>
+            <div key={project.id} className={`${styles.row} ${isAdded ? styles.rowAdded : ''}`} onClick={() => handleToggle(project.id)}>
               {/* Thumbnail */}
               <div className={styles.thumb} />
 
@@ -114,25 +132,23 @@ export default function AddToProjectPicker({ imageSrc, imageFilename, onClose }:
                 </span>
               </div>
 
-              {/* Add button */}
-              <button
+              {/* Add / remove button — visual only, row handles the click */}
+              <div
                 className={`${styles.addBtn} ${isAdded ? styles.addBtnAdded : ''}`}
-                onClick={() => handleAdd(project.id)}
-                disabled={isLoading || isAdded}
-                aria-label={isAdded ? 'Added' : `Add to ${project.title}`}
+                aria-label={isAdded ? `Remove from ${project.title}` : `Add to ${project.title}`}
               >
                 {isLoading ? (
                   <span className={styles.spinner} />
                 ) : isAdded ? (
-                  <svg width="14" height="11" viewBox="0 0 14 11" fill="none">
-                    <path d="M1 5.5L5.5 10L13 1" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                    <path d="M1 5L4.5 8.5L11 1" stroke="#8deaff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ) : (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 1v12M1 7h12" stroke="#888" strokeWidth="1.8" strokeLinecap="round"/>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 1v10M1 6h10" stroke="#aaa" strokeWidth="1.8" strokeLinecap="round"/>
                   </svg>
                 )}
-              </button>
+              </div>
             </div>
           )
         })

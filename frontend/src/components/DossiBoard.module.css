@@ -36,14 +36,14 @@
 
 .tabLabel {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 400;
   color: #111;
 }
 
 .tabCountNum {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 400;
   color: #b3b2b2;
   margin-left: 0.4em;

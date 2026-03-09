@@ -13,15 +13,18 @@
 
 .tabs {
   display: flex;
-  gap: 32px;
+  justify-content: space-between;
   align-items: flex-end;
+  width: 100%;
 }
 
 .tabWrapper {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
+  flex: 0 0 auto;
+  width: fit-content;
 }
 
 .tab {
@@ -47,7 +50,9 @@
 .tabIndicator {
   height: 4px;
   width: 100%;
-  min-width: 80px;
+  box-sizing: content-box;
+  padding: 0 8px;
+  margin: 0 -8px;
   background-color: var(--color-tab-indicator);
   border-radius: 17px;
   opacity: 0;

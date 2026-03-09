@@ -163,7 +163,7 @@ function ImageTile({ src, filename }: ImageTileProps) {
       ref={tileRef}
       className={styles.imageTile}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false) }}
+      onMouseLeave={() => { setHovered(false); setPickerOpen(false) }}
     >
       <img src={src} alt="" className={styles.image} draggable={false} />
 

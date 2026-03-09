@@ -154,6 +154,24 @@ def add_item_from_asset(
     return item
 
 
+@router.delete("/projects/{project_id}/dossi-board/from-asset", status_code=204)
+def remove_item_from_asset(
+    project_id: str,
+    src_path: str,
+    db: Session = Depends(get_db),
+):
+    """Remove a visual-exploration asset reference by its src_path."""
+    stored_path = f"asset:{src_path}"
+    item = db.query(DossiBoardItem).filter(
+        DossiBoardItem.project_id == project_id,
+        DossiBoardItem.file_path == stored_path,
+    ).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    db.delete(item)
+    db.commit()
+
+
 @router.delete("/projects/{project_id}/dossi-board/{item_id}", status_code=204)
 def delete_item(
     project_id: str,
