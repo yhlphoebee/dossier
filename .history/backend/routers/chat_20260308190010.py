@@ -1,9 +1,8 @@
 import asyncio
-import json
 import os
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import datetime
 from openai import AsyncOpenAI, OpenAI, OpenAIError
@@ -36,37 +35,6 @@ class CitationOut(BaseModel):
     title: Optional[str] = None
     start_index: Optional[int] = None
     end_index: Optional[int] = None
-
-
-class ResearchReference(BaseModel):
-    """Structured reference item returned by the Research agent."""
-
-    title: str
-    url: str
-    note: Optional[str] = None
-
-
-class ResearchAgentResult(BaseModel):
-    """
-    Structured schema for the Research agent.
-
-    The model should always return this shape:
-
-    {
-      "answer": string,
-      "references": [
-        {
-          "title": string,
-          "url": string,
-          "note": string | null
-        },
-        ...
-      ]
-    }
-    """
-
-    answer: str
-    references: List[ResearchReference]
 
 
 class ChatResponse(BaseModel):
@@ -197,33 +165,15 @@ async def send_message(
             sync_client = OpenAI(api_key=api_key)
 
             def _create_response():
-                # SDK version does not support response_format yet; we enforce
-                # the JSON shape post-hoc via Pydantic validation instead.
                 return sync_client.responses.create(
                     model="gpt-5",
                     tools=[{"type": "web_search"}],
                     input=input_list,
-                    max_output_tokens=10000,
+                    max_output_tokens=3000,
                 )
 
             response = await asyncio.to_thread(_create_response)
-            raw_text = (response.output_text or "").strip()
-            try:
-                parsed = ResearchAgentResult.model_validate(json.loads(raw_text))
-            except (json.JSONDecodeError, ValidationError):
-                parsed = ResearchAgentResult(answer=raw_text, references=[])
-
-            # Build final answer + inline reference section
-            answer_text = (parsed.answer or "").strip()
-            if parsed.references:
-                lines: List[str] = [answer_text, "", "References:"]
-                for idx, ref in enumerate(parsed.references, start=1):
-                    label = ref.title or ref.url
-                    note = f" – {ref.note}" if ref.note else ""
-                    lines.append(f"{idx}. [{label}]({ref.url}){note}")
-                answer_text = "\n\n".join(lines)
-
-            reply_text = answer_text
+            reply_text = (response.output_text or "").strip()
             output = getattr(response, "output", None)
             if output is not None:
                 citations = _extract_citations_from_response_output(output)

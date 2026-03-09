@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { getGraphicElement } from '../utils/assets'
-import DossiBoard from '../components/DossiBoard'
 import styles from './ProjectPage.module.css'
 
 interface Project {
@@ -31,29 +30,18 @@ interface Project {
   present_detail_summary?: string
 }
 
-interface Citation {
-  url: string
-  title?: string
-  start_index?: number
-  end_index?: number
-}
-
 interface ChatMessage {
   id?: string
   role: 'user' | 'assistant'
   content: string
   created_at?: string
-  image_url?: string
-  image_src?: string  // client-only alias; populated from image_url on load
-  citations?: Citation[]  // web search sources (Research agent); only on newly received messages
-  web_search_used?: boolean  // true when this reply used the web-search model
 }
 
-type AgentKey = 'strategy' | 'research' | 'concept' | 'present'
-
-const TABS = ['Strategist', 'Researcher', 'Director', 'Presenter'] as const
+const TABS = ['Strategy', 'Research', 'Concept', 'Present'] as const
 const TAB_KEYS: AgentKey[] = ['strategy', 'research', 'concept', 'present']
 const CLARITY_DOTS = 8
+
+type AgentKey = 'strategy' | 'research' | 'concept' | 'present'
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>()
@@ -61,6 +49,7 @@ export default function ProjectPage() {
 
   const [project, setProject] = useState<Project | null>(null)
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [savedFeedback, setSavedFeedback] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
@@ -85,62 +74,6 @@ export default function ProjectPage() {
   })
   const [problemOpen, setProblemOpen] = useState(false)
   const [assumptionsOpen, setAssumptionsOpen] = useState(false)
-  // 'closed' | 'opening' | 'open' | 'closing'
-  const [dossiBoardState, setDossiBoardState] = useState<'closed' | 'opening' | 'open' | 'closing'>('closed')
-  const [dossiBoardWidth, setDossiBoardWidth] = useState<number | null>(null)
-  const [isResizing, setIsResizing] = useState(false)
-  const bodyRef = useRef<HTMLDivElement>(null)
-
-  const openDossiBoard = () => {
-    setDossiBoardState('opening')
-    requestAnimationFrame(() => requestAnimationFrame(() => setDossiBoardState('open')))
-  }
-
-  const closeDossiBoard = () => {
-    setDossiBoardState('closing')
-    setDossiBoardWidth(null)
-    setTimeout(() => setDossiBoardState('closed'), 420)
-  }
-
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsResizing(true)
-
-    const startX = e.clientX
-    const startWidth = bodyRef.current
-      ? (dossiBoardWidth ?? bodyRef.current.offsetWidth * 0.62)
-      : (dossiBoardWidth ?? window.innerWidth * 0.62)
-
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-
-    const onMouseMove = (ev: MouseEvent) => {
-      const bodyWidth = bodyRef.current?.offsetWidth ?? window.innerWidth
-      const newWidth = Math.min(
-        Math.max(startWidth + (ev.clientX - startX), 600),
-        bodyWidth - 600,
-      )
-      setDossiBoardWidth(newWidth)
-    }
-
-    const onMouseUp = () => {
-      setIsResizing(false)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-    }
-
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-  }
-
-  // Panel is wide during opening + open; starts collapsing the moment closing begins
-  const dossiBoardExpanded = dossiBoardState === 'opening' || dossiBoardState === 'open'
-  // DossiBoard div stays mounted during closing so it can animate out
-  const dossiBoardMounted = dossiBoardState !== 'closed'
-  // Only 'open' gets the visible class — 'opening' is the initial mounted-but-invisible frame
-  const dossiBoardVisible = dossiBoardState === 'open'
 
   const [messagesByAgent, setMessagesByAgent] = useState<Record<AgentKey, ChatMessage[]>>({
     strategy: [],
@@ -150,19 +83,12 @@ export default function ProjectPage() {
   })
   const [input, setInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
-  const [droppedImage, setDroppedImage] = useState<{ src: string; name: string } | null>(null)
-  const [chatInputDragOver, setChatInputDragOver] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
   const titleSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const summarySaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const problemSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const assumptionsSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Local state for textareas to prevent cursor jumping
-  const [localSummary, setLocalSummary] = useState('')
-  const [localProblem, setLocalProblem] = useState('')
-  const [localAssumptions, setLocalAssumptions] = useState('')
 
   const LINE_HEIGHT_PX = 18 * 1.4 // font-size * line-height
   const MAX_LINES = 8
@@ -180,15 +106,7 @@ export default function ProjectPage() {
     resizeChatInput()
   }, [input])
 
-  // Sync local textarea state with global state when agent changes
-  useEffect(() => {
-    const currentAgent = TAB_KEYS[activeTab]
-    setLocalSummary(summaryByAgent[currentAgent])
-    setLocalProblem(problemByAgent[currentAgent])
-    setLocalAssumptions(assumptionsByAgent[currentAgent])
-  }, [activeTab, summaryByAgent, problemByAgent, assumptionsByAgent])
-
-  // Load project + per-agent chat history in parallel
+  // Force refetch project data on every mount (re-entry)
   useEffect(() => {
     if (!id) return
 
@@ -200,6 +118,7 @@ export default function ProjectPage() {
       .then(async (projectData) => {
         setProject(projectData)
         setTitle(projectData.title === 'Untitled' ? '' : projectData.title)
+        setDescription(projectData.description ?? '')
 
         // Seed per-agent summaries from project fields
         setSummaryByAgent({
@@ -231,18 +150,15 @@ export default function ProjectPage() {
           )
         )
 
-        const hydrate = (msgs: ChatMessage[]) =>
-          msgs.map((m) => ({ ...m, image_src: m.image_url ?? m.image_src }))
-
         setMessagesByAgent({
-          strategy: hydrate(histories[0] ?? []),
-          research: hydrate(histories[1] ?? []),
-          concept: hydrate(histories[2] ?? []),
-          present: hydrate(histories[3] ?? []),
+          strategy: histories[0] ?? [],
+          research: histories[1] ?? [],
+          concept: histories[2] ?? [],
+          present: histories[3] ?? [],
         })
       })
       .catch(() => navigate('/'))
-  }, [id, navigate])
+  }, [])  // No deps, runs on every mount
 
   // Scroll chat to bottom on new message
   useEffect(() => {
@@ -251,19 +167,20 @@ export default function ProjectPage() {
 
   // Auto-save summary when user stops typing (debounced)
   useEffect(() => {
+    if (!id || project === null) return
     const currentAgent = TAB_KEYS[activeTab]
+    const valueToSave = summaryByAgent[currentAgent]
 
     if (summarySaveTimeoutRef.current) clearTimeout(summarySaveTimeoutRef.current)
     summarySaveTimeoutRef.current = setTimeout(async () => {
       summarySaveTimeoutRef.current = null
-      setSummaryByAgent((prev) => ({ ...prev, [currentAgent]: localSummary }))
       try {
         await fetch(`/api/projects/${id}/agent-summary`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             agent: currentAgent,
-            summary: localSummary,
+            summary: valueToSave,
           }),
         })
         // No feedback for summary saves, to avoid noise
@@ -275,23 +192,24 @@ export default function ProjectPage() {
     return () => {
       if (summarySaveTimeoutRef.current) clearTimeout(summarySaveTimeoutRef.current)
     }
-  }, [localSummary, activeTab, id])
+  }, [summaryByAgent, activeTab, id, project])
 
   // Auto-save problem statement when user stops typing (debounced)
   useEffect(() => {
+    if (!id || project === null) return
     const currentAgent = TAB_KEYS[activeTab]
+    const valueToSave = problemByAgent[currentAgent]
 
     if (problemSaveTimeoutRef.current) clearTimeout(problemSaveTimeoutRef.current)
     problemSaveTimeoutRef.current = setTimeout(async () => {
       problemSaveTimeoutRef.current = null
-      setProblemByAgent((prev) => ({ ...prev, [currentAgent]: localProblem }))
       try {
         await fetch(`/api/projects/${id}/agent-summary`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             agent: currentAgent,
-            problem_statement: localProblem,
+            problem_statement: valueToSave,
           }),
         })
         // No feedback for saves, to avoid noise
@@ -303,23 +221,24 @@ export default function ProjectPage() {
     return () => {
       if (problemSaveTimeoutRef.current) clearTimeout(problemSaveTimeoutRef.current)
     }
-  }, [localProblem, activeTab, id])
+  }, [problemByAgent, activeTab, id, project])
 
   // Auto-save assumptions when user stops typing (debounced)
   useEffect(() => {
+    if (!id || project === null) return
     const currentAgent = TAB_KEYS[activeTab]
+    const valueToSave = assumptionsByAgent[currentAgent]
 
     if (assumptionsSaveTimeoutRef.current) clearTimeout(assumptionsSaveTimeoutRef.current)
     assumptionsSaveTimeoutRef.current = setTimeout(async () => {
       assumptionsSaveTimeoutRef.current = null
-      setAssumptionsByAgent((prev) => ({ ...prev, [currentAgent]: localAssumptions }))
       try {
         await fetch(`/api/projects/${id}/agent-summary`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             agent: currentAgent,
-            assumptions: localAssumptions,
+            assumptions: valueToSave,
           }),
         })
         // No feedback for saves, to avoid noise
@@ -331,7 +250,7 @@ export default function ProjectPage() {
     return () => {
       if (assumptionsSaveTimeoutRef.current) clearTimeout(assumptionsSaveTimeoutRef.current)
     }
-  }, [localAssumptions, activeTab, id])
+  }, [assumptionsByAgent, activeTab, id, project])
 
   // Auto-save title when user stops typing (debounced)
   useEffect(() => {
@@ -393,63 +312,34 @@ export default function ProjectPage() {
 
   const handleSend = async () => {
     const text = input.trim()
-    if ((!text && !droppedImage) || chatLoading) return
+    if (!text || chatLoading) return
 
     const agent = TAB_KEYS[activeTab]
-    const imageToSend = droppedImage
-
-    // Convert dropped image to base64 if present
-    let imageBase64: string | null = null
-    if (imageToSend) {
-      try {
-        const imgRes = await fetch(imageToSend.src)
-        const blob = await imgRes.blob()
-        imageBase64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = reject
-          reader.readAsDataURL(blob)
-        })
-      } catch {
-        // If image fetch fails, proceed without it
-      }
-    }
-
-    const displayContent = text || ''
 
     // Optimistically show the user message immediately
-    const optimisticUser: ChatMessage = {
-      role: 'user',
-      content: displayContent,
-      ...(imageToSend ? { image_src: imageToSend.src } : {}),
-    }
+    const optimisticUser: ChatMessage = { role: 'user', content: text }
     setMessagesByAgent((prev) => ({
       ...prev,
       [agent]: [...prev[agent], optimisticUser],
     }))
     setInput('')
-    setDroppedImage(null)
     setChatLoading(true)
 
     try {
       const res = await fetch(`/api/projects/${id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: text || ' ',
-          agent,
-          ...(imageBase64 ? { image_url: imageBase64 } : {}),
-        }),
+        body: JSON.stringify({ content: text, agent }),
       })
       if (!res.ok) throw new Error('Chat failed')
       const data = await res.json()
-      // Replace the optimistic user message with the persisted one, then add assistant reply (with citations if any)
+      // Replace the optimistic user message with the persisted one, then add assistant reply
       setMessagesByAgent((prev) => ({
         ...prev,
         [agent]: [
           ...prev[agent].slice(0, -1),
-          { ...data.user_message, image_src: data.user_message.image_url ?? undefined },
-          { ...data.assistant_message, citations: data.citations ?? undefined, web_search_used: data.web_search_used },
+          data.user_message,
+          data.assistant_message,
         ],
       }))
     } catch {
@@ -472,60 +362,28 @@ export default function ProjectPage() {
     }
   }
 
-  const handleChatInputDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setChatInputDragOver(false)
-    const src = e.dataTransfer.getData('application/dossiboard-image-src')
-    const name = e.dataTransfer.getData('application/dossiboard-image-name')
-    if (src) {
-      setDroppedImage({ src, name: name || 'image' })
-    }
-  }
-
-  const handleChatInputDragOver = (e: React.DragEvent) => {
-    if (e.dataTransfer.types.includes('application/dossiboard-image-src')) {
-      e.preventDefault()
-      setChatInputDragOver(true)
-    }
-  }
-
-  const handleChatInputDragLeave = (e: React.DragEvent) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setChatInputDragOver(false)
-    }
-  }
-
   const displayTitle = title.trim() || 'Untitled'
   const currentAgent: AgentKey = TAB_KEYS[activeTab]
   const messages = messagesByAgent[currentAgent]
+  const problemStatement = problemByAgent[currentAgent]
+  const assumptions = assumptionsByAgent[currentAgent]
+  const summary = summaryByAgent[currentAgent]
 
   return (
     <div className={styles.layout}>
       {/* Top bar */}
       <header className={styles.header}>
         <button className={styles.logoLink} onClick={() => navigate('/')}>
-          DOSSIER
+          Dossier
         </button>
-        <input
-          className={`${styles.projectTitle} ${styles.projectTitleInput}`}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Untitled"
-          size={Math.max(8, (title || 'Untitled').length + 1)}
-          aria-label="Project title"
-        />
+        <span className={styles.projectTitle}>{displayTitle}</span>
       </header>
 
       <div className={styles.divider} />
 
-      <div className={styles.body} ref={bodyRef}>
+      <div className={styles.body}>
         {/* ── Left panel ── */}
-        <aside
-          className={`${styles.leftPanel} ${dossiBoardExpanded ? styles.leftPanelExpanded : ''} ${dossiBoardState === 'open' ? styles.leftPanelOpen : ''} ${isResizing ? styles.leftPanelResizing : ''}`}
-          style={dossiBoardExpanded && dossiBoardWidth !== null ? { width: dossiBoardWidth, minWidth: dossiBoardWidth } : undefined}
-        >
-          {/* Normal content — fades out as board opens */}
-          <div className={`${styles.panelNormal} ${dossiBoardState === 'open' || dossiBoardState === 'opening' ? styles.panelNormalHidden : ''}`}>
+        <aside className={styles.leftPanel}>
           {/* Tab bar */}
           <nav className={styles.tabBar}>
             {TABS.map((tab, i) => (
@@ -558,7 +416,36 @@ export default function ProjectPage() {
                 onClick={handleSave}
                 disabled={saving}
               >
-                {savedFeedback ? 'SAVED' : 'UPDATE'}
+                {saving ? (
+                  <>
+                    <svg
+                      className={styles.spinner}
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        opacity="0.25"
+                      />
+                      <path
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    UPDATING...
+                  </>
+                ) : savedFeedback ? (
+                  'SAVED'
+                ) : (
+                  'UPDATE'
+                )}
               </button>
             </div>
 
@@ -584,8 +471,10 @@ export default function ProjectPage() {
               <textarea
                 className={styles.statementInput}
                 placeholder="Enter your key strategic statement here…"
-                value={localSummary}
-                onChange={(e) => setLocalSummary(e.target.value)}
+                value={summary}
+                onChange={(e) =>
+                  setSummaryByAgent((prev) => ({ ...prev, [currentAgent]: e.target.value }))
+                }
                 rows={3}
               />
             </div>
@@ -610,8 +499,8 @@ export default function ProjectPage() {
                 <textarea
                   className={styles.accordionTextarea}
                   placeholder="Describe the problem this project addresses…"
-                  value={localProblem}
-                  onChange={(e) => setLocalProblem(e.target.value)}
+                  value={problemStatement}
+                  onChange={(e) => setProblemByAgent((prev) => ({ ...prev, [currentAgent]: e.target.value }))}
                   rows={4}
                 />
               )}
@@ -637,28 +526,22 @@ export default function ProjectPage() {
                 <textarea
                   className={styles.accordionTextarea}
                   placeholder="List the key assumptions for this project…"
-                  value={localAssumptions}
-                  onChange={(e) => setLocalAssumptions(e.target.value)}
+                  value={assumptions}
+                  onChange={(e) => setAssumptionsByAgent((prev) => ({ ...prev, [currentAgent]: e.target.value }))}
                   rows={4}
                 />
               )}
             </div>
           </div>
 
-          {/* Dossi Board preview (collapsed) */}
+          {/* Dossi Board preview */}
           <div className={styles.dossiBoard}>
             <div className={styles.dossiBoardLeft}>
               <span className={styles.dossiBoardTitle}>Dossi Board</span>
-              <button
-                className={styles.dossiBoardArrowBtn}
-                onClick={openDossiBoard}
-                aria-label="Expand Dossi Board"
-              >
-                <svg className={styles.dossiBoardArrow} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <line x1="10" y1="110" x2="110" y2="10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                  <polyline points="2,10 110,10 110,118" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                </svg>
-              </button>
+              <svg className={styles.dossiBoardArrow} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="10" y1="110" x2="110" y2="10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                <polyline points="2,10 110,10 110,118" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
             </div>
             <div className={styles.dossiBoardRight}>
               {project && (
@@ -670,23 +553,6 @@ export default function ProjectPage() {
               )}
             </div>
           </div>
-          </div>{/* end panelNormal */}
-
-          {/* Dossi Board overlay — stays mounted during closing so it can animate out */}
-          {dossiBoardMounted && (
-            <div className={`${styles.dossiBoardExpanded} ${dossiBoardVisible ? styles.dossiBoardExpandedVisible : ''}`}>
-              <DossiBoard projectId={id!} onCollapse={closeDossiBoard} />
-            </div>
-          )}
-
-          {/* Resize handle — only visible when board is open */}
-          {dossiBoardState === 'open' && (
-            <div
-              className={`${styles.resizeHandle} ${isResizing ? styles.resizeHandleActive : ''}`}
-              onMouseDown={handleResizeMouseDown}
-              aria-label="Resize Dossi Board"
-            />
-          )}
         </aside>
 
         {/* ── Right panel: AI Chat ── */}
@@ -700,44 +566,14 @@ export default function ProjectPage() {
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`${styles.chatMessageGroup} ${msg.role === 'user' ? styles.chatMessageGroupUser : styles.chatMessageGroupAssistant}`}
+                className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant}`}
               >
-                {msg.role === 'user' && msg.image_src && (
-                  <img src={msg.image_src} alt="attached" className={styles.chatBubbleImage} />
-                )}
-                {(msg.role === 'assistant' || msg.content) && (
-                  <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant}`}>
-                    {msg.role === 'assistant' ? (
-                      <>
-                        <div className={styles.chatMarkdown}>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                        </div>
-                        {(msg.web_search_used || (msg.citations && msg.citations.length > 0)) && (
-                          <div className={styles.chatCitations}>
-                            {msg.web_search_used && (
-                              <span className={styles.chatSearchBadge} title="This reply used web search">Searched the web</span>
-                            )}
-                            {msg.citations && msg.citations.length > 0 && (
-                              <>
-                                <span className={styles.chatCitationsLabel}>Sources:</span>
-                                <ul className={styles.chatCitationsList}>
-                                  {msg.citations.map((c, j) => (
-                                    <li key={j}>
-                                      <a href={c.url} target="_blank" rel="noopener noreferrer" className={styles.chatCitationLink}>
-                                        {c.title || c.url}
-                                      </a>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      msg.content
-                    )}
+                {msg.role === 'assistant' ? (
+                  <div className={styles.chatMarkdown}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                   </div>
+                ) : (
+                  msg.content
                 )}
               </div>
             ))}
@@ -752,54 +588,28 @@ export default function ProjectPage() {
           </div>
 
           {/* Chat input bar */}
-          <div
-            className={`${styles.chatInputBar} ${chatInputDragOver ? styles.chatInputBarDragOver : ''}`}
-            onDrop={handleChatInputDrop}
-            onDragOver={handleChatInputDragOver}
-            onDragLeave={handleChatInputDragLeave}
-          >
-            {droppedImage && (
-              <div className={styles.imagePreviewRow}>
-                <div className={styles.imagePreviewWrap}>
-                  <img src={droppedImage.src} alt={droppedImage.name} className={styles.imagePreview} />
-                  <button
-                    className={styles.imagePreviewRemove}
-                    onClick={() => setDroppedImage(null)}
-                    aria-label="Remove image"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M1 1l8 8M9 1L1 9" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
-            {chatInputDragOver && !droppedImage && (
-              <div className={styles.chatDropHint}>Drop image here</div>
-            )}
-            <div className={styles.chatInputRow}>
-              <textarea
-                ref={chatInputRef}
-                className={styles.chatInput}
-                placeholder={droppedImage ? 'Add a message (optional)…' : 'Ask anything'}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={chatLoading}
-                rows={1}
-                aria-label="Chat message"
-              />
-              <button
-                className={styles.sendBtn}
-                onClick={handleSend}
-                disabled={chatLoading || (!input.trim() && !droppedImage)}
-                aria-label="Send"
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 17V3M10 3L4 9M10 3L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
+          <div className={styles.chatInputBar}>
+            <textarea
+              ref={chatInputRef}
+              className={styles.chatInput}
+              placeholder="Ask anything"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={chatLoading}
+              rows={1}
+              aria-label="Chat message"
+            />
+            <button
+              className={styles.sendBtn}
+              onClick={handleSend}
+              disabled={chatLoading || !input.trim()}
+              aria-label="Send"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 17V3M10 3L4 9M10 3L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         </main>
       </div>

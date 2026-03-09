@@ -15,7 +15,15 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('chat_messages', sa.Column('image_url', sa.Text(), nullable=True))
+    conn = op.get_bind()
+    if conn.dialect.name == 'sqlite':
+        cursor = conn.execute(sa.text("PRAGMA table_info(chat_messages)"))
+        columns = {row[1] for row in cursor.fetchall()}
+    else:
+        from sqlalchemy import inspect
+        columns = {c["name"] for c in inspect(conn).get_columns("chat_messages")}
+    if 'image_url' not in columns:
+        op.add_column('chat_messages', sa.Column('image_url', sa.Text(), nullable=True))
 
 
 def downgrade() -> None:

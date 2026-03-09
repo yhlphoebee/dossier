@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from models import Project, ChatMessage
 
 logger = logging.getLogger("dossier.prompt")
@@ -78,8 +77,6 @@ Tone: direct, precise, calm, constructive but firm.
 INVESTIGATOR_SYSTEM_PROMPT = f"""
 You are THE INVESTIGATOR.
 
-In this chat you have access to a web search tool. You can look up current information, verify links, and find credible sources. If the user asks whether you have web search or can search the web, say yes and explain that you can search and will cite sources when providing references.
-
 You are a research-driven design historian and contextual analyst.
 Your role is to ground design directions in evidence and precedent.
 
@@ -107,8 +104,6 @@ When suggesting references, you explain:
 - Why it is relevant
 - What principle is transferable
 - What limitations exist
-
-When the user asks for references, sources, or links, you may search the web for current, credible sources. When you provide references, always cite specific URLs so the user can click through to the source. Include clear, clickable website links in your response when giving references.
 
 At the end of each session, you should be able to update the shared CASE FILE with:
 
@@ -309,22 +304,6 @@ def build_system_prompt(project: Project, agent: str = "") -> str:
         context_block = "\n\nProject context:\n" + "\n".join(context_lines)
         base += context_block
 
-    # Inject other agents' detail summaries as shared context
-    all_detail_summaries = {
-        "strategy": project.strategy_detail_summary or "",
-        "research": project.research_detail_summary or "",
-        "concept": project.concept_detail_summary or "",
-        "present": project.present_detail_summary or "",
-    }
-    current_agent = (agent or "").lower()
-    summary_blocks: list[str] = []
-    for key, detail in all_detail_summaries.items():
-        if key == current_agent or not detail.strip():
-            continue
-        summary_blocks.append(f"[{key.upper()} SUMMARY]\n{detail.strip()}")
-    if summary_blocks:
-        base += "\n\nShared case file from other agents:\n" + "\n\n".join(summary_blocks)
-
     # Add agent-specific prompt
     agent_prompt = _select_system_prompt(agent)
     if agent_prompt:
@@ -495,34 +474,20 @@ def build_messages(
     project: Project,
     history: list[ChatMessage],
     agent: str = "",
-    image_url: Optional[str] = None,
 ) -> list[dict]:
     """
     Build the full OpenAI messages array:
       - system: role + project context + agent prompt
       - user/assistant: real alternating turns from DB history
-      - user: the new message (with optional image)
+      - user: the new message
     Logs the full payload for debugging.
     """
     system_prompt = build_system_prompt(project, agent)
 
     messages: list[dict] = [{"role": "system", "content": system_prompt}]
     for msg in history:
-        if msg.content and msg.content.strip():
-            messages.append({"role": msg.role, "content": msg.content})
-
-    # Build the final user message — multimodal if an image was provided
-    if image_url:
-        user_content: list[dict] = []
-        if new_message and new_message.strip():
-            user_content.append({"type": "text", "text": new_message.strip()})
-        user_content.append({
-            "type": "image_url",
-            "image_url": {"url": image_url, "detail": "high"},
-        })
-        messages.append({"role": "user", "content": user_content})
-    else:
-        messages.append({"role": "user", "content": new_message})
+        messages.append({"role": msg.role, "content": msg.content})
+    messages.append({"role": "user", "content": new_message})
 
     # ── Debug log ──────────────────────────────────────────────────────────────
     history_log = "\n".join(

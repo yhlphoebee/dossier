@@ -18,31 +18,31 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _columns(conn, table: str) -> set:
+    if conn.dialect.name == 'sqlite':
+        cursor = conn.execute(sa.text(f"PRAGMA table_info({table})"))
+        return {row[1] for row in cursor.fetchall()}
+    from sqlalchemy import inspect
+    return {c["name"] for c in inspect(conn).get_columns(table)}
+
+
 def upgrade() -> None:
     """Upgrade schema."""
-    # Add per-agent summary fields to projects
-    op.add_column('projects', sa.Column('strategy_summary', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('strategy_problem_statement', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('strategy_assumptions', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('strategy_detail_summary', sa.Text(), nullable=True))
+    conn = op.get_bind()
+    proj = _columns(conn, 'projects')
+    project_cols = [
+        'strategy_summary', 'strategy_problem_statement', 'strategy_assumptions', 'strategy_detail_summary',
+        'research_summary', 'research_problem_statement', 'research_assumptions', 'research_detail_summary',
+        'concept_summary', 'concept_problem_statement', 'concept_assumptions', 'concept_detail_summary',
+        'present_summary', 'present_problem_statement', 'present_assumptions', 'present_detail_summary',
+    ]
+    for col in project_cols:
+        if col not in proj:
+            op.add_column('projects', sa.Column(col, sa.Text(), nullable=True))
 
-    op.add_column('projects', sa.Column('research_summary', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('research_problem_statement', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('research_assumptions', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('research_detail_summary', sa.Text(), nullable=True))
-
-    op.add_column('projects', sa.Column('concept_summary', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('concept_problem_statement', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('concept_assumptions', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('concept_detail_summary', sa.Text(), nullable=True))
-
-    op.add_column('projects', sa.Column('present_summary', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('present_problem_statement', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('present_assumptions', sa.Text(), nullable=True))
-    op.add_column('projects', sa.Column('present_detail_summary', sa.Text(), nullable=True))
-
-    # Add agent column to chat_messages
-    op.add_column('chat_messages', sa.Column('agent', sa.String(), nullable=True))
+    chat = _columns(conn, 'chat_messages')
+    if 'agent' not in chat:
+        op.add_column('chat_messages', sa.Column('agent', sa.String(), nullable=True))
 
 
 def downgrade() -> None:

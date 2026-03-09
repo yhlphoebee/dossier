@@ -19,6 +19,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+    if conn.dialect.name == 'sqlite':
+        cursor = conn.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='dossi_board_items'"))
+        if cursor.fetchone():
+            return
+    else:
+        from sqlalchemy import inspect
+        if 'dossi_board_items' in inspect(conn).get_table_names():
+            return
+
     op.create_table(
         'dossi_board_items',
         sa.Column('id', sa.String(), nullable=False),
