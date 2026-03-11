@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { getGraphicElement } from '../utils/assets'
@@ -84,6 +84,7 @@ const CLARITY_DOTS = 8
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [project, setProject] = useState<Project | null>(null)
   const [title, setTitle] = useState('')
@@ -289,6 +290,14 @@ export default function ProjectPage() {
       })
       .catch(() => navigate('/'))
   }, [id, navigate])
+
+  // Open Dossi Board when navigating from sidebar "Visual Exploration" project list
+  useEffect(() => {
+    if (!id || (location.state as { openDossiBoard?: boolean } | null)?.openDossiBoard !== true) return
+    setDossiBoardState('opening')
+    requestAnimationFrame(() => requestAnimationFrame(() => setDossiBoardState('open')))
+    navigate(location.pathname, { replace: true, state: {} })
+  }, [id, location.state, location.pathname, navigate])
 
   // Scroll chat to bottom on new message
   useEffect(() => {

@@ -119,7 +119,7 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
                     <button
                       key={project.id}
                       className={styles.projectItem}
-                      onClick={() => navigate(`/project/${project.id}`)}
+                      onClick={() => navigate(`/project/${project.id}`, { state: { openDossiBoard: true } })}
                     >
                       {project.title}
                     </button>
