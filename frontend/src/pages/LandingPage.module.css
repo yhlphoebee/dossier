@@ -1,0 +1,153 @@
+.page {
+  width: 100vw;
+  height: 100vh;
+  background-color: #f4f0ea;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-display);
+}
+
+/* ── NAV ── */
+.nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 115px;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  z-index: 10;
+}
+
+.wordmark {
+  font-size: 35px;
+  font-weight: 400;
+  color: #000;
+  letter-spacing: 0;
+  flex: 1;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.navLinkOutline {
+  font-size: 22px;
+  font-weight: 400;
+  color: #000;
+  padding: 0 28px;
+  height: 51px;
+  border: 1px solid #000;
+  border-radius: 196px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-right: 6px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.navLinkOutline:last-of-type {
+  margin-right: 0;
+}
+
+.navLinkFilled {
+  font-size: 22px;
+  font-weight: 400;
+  color: #fff;
+  padding: 0 28px;
+  height: 51px;
+  background-color: #8deaff;
+  border-radius: 196px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  border: none;
+  margin-left: 6px;
+}
+
+/* ── HERO TEXT ── */
+.heroText {
+  position: absolute;
+  top: 139px;
+  left: 40px;
+  z-index: 10;
+}
+
+.heroLine1 {
+  font-size: 58px;
+  font-weight: 400;
+  color: #000;
+  line-height: 1.01;
+  max-width: 490px;
+}
+
+.heroRight {
+  position: absolute;
+  top: 168px;
+  right: 40px;
+  z-index: 10;
+}
+
+.heroLine2 {
+  font-size: 58px;
+  font-weight: 400;
+  color: #000;
+  line-height: 1.01;
+}
+
+/* ── DIVIDER LINE ── */
+.dividerWrap {
+  position: absolute;
+  top: 240px;
+  left: 40px;
+  right: 40px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.dividerLine {
+  height: 6px;
+  width: 897px;
+  background-color: #8deaff;
+  border-radius: 17px;
+  position: relative;
+}
+
+.dividerDot {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  background-color: #000;
+  border-radius: 50%;
+}
+
+/* ── LOGO IFRAME ── */
+.logoWrap {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 290px;
+  width: 756px;
+  height: 622px;
+  z-index: 5;
+  overflow: hidden;
+  border: none;
+}
+
+.logoFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+}

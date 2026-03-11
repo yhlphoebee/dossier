@@ -1,0 +1,120 @@
+.page {
+  width: 100vw;
+  height: 100vh;
+  background-color: #fff;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+}
+
+.wordmark {
+  position: absolute;
+  top: 37px;
+  left: 46px;
+  font-size: 35px;
+  font-weight: 400;
+  color: #000;
+  letter-spacing: 0;
+}
+
+.copyright {
+  position: absolute;
+  bottom: 45px;
+  right: 40px;
+  font-size: 16px;
+  color: #222121;
+  font-family: var(--font-display);
+}
+
+/* ── CARD ── */
+.card {
+  width: 594px;
+  border-radius: 23px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.06);
+}
+
+.cardTop {
+  background-color: #f4f0ea;
+  height: 363px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.logoImg {
+  width: 330px;
+  height: 304px;
+  object-fit: cover;
+  display: block;
+}
+
+.cardBottom {
+  background-color: #cdebf2;
+  padding: 48px 89px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.welcomeTitle {
+  font-size: 56px;
+  font-weight: 400;
+  color: #000;
+  line-height: 1.01;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.termsText {
+  font-size: 16px;
+  color: #222121;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 32px;
+}
+
+.termsText a {
+  text-decoration: underline;
+  color: #222121;
+}
+
+.loginBtn {
+  width: 416px;
+  height: 80px;
+  background-color: #fff;
+  border-radius: 193px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  color: #222121;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+
+.loginBtn:hover {
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.loginBtn + .loginBtn {
+  margin-top: 12px;
+}
+
+.btnIcon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
