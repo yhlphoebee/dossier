@@ -182,6 +182,36 @@
   left: 29px;
 }
 
+/* ── Projects list ── */
+.projectsList {
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0 24px;
+  padding: 10px 0;
+  border-radius: 4px;
+}
+
+.projectItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+
+.projectItem:hover {
+  background-color: var(--color-accent-cyan);
+  color: var(--color-black);
+}
+
 /* ── Footer ── */
 .footer {
   display: flex;

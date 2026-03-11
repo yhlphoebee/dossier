@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styles from './Sidebar.module.css'
+import { Project } from '../pages/HomePage'
 
 function ChevronDoubleLeft() {
   return (
@@ -34,10 +35,11 @@ interface SidebarProps {
   onSearchChange: (value: string) => void
   filters: FilterCategory[]
   onToggleFilter: (index: number) => void
+  projects: Project[]
   collapsible?: boolean
 }
 
-export default function Sidebar({ searchQuery, onSearchChange, filters, onToggleFilter, collapsible = false }: SidebarProps) {
+export default function Sidebar({ searchQuery, onSearchChange, filters, onToggleFilter, projects, collapsible = false }: SidebarProps) {
   const [activeSort, setActiveSort] = useState<SortOption>('Relevant')
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
@@ -111,6 +113,19 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
                   <span className={styles.toggleThumb} />
                 </button>
               </div>
+              {filter.label === 'Visual Exploration' && filter.enabled && (
+                <div className={styles.projectsList}>
+                  {projects.map((project) => (
+                    <button
+                      key={project.id}
+                      className={styles.projectItem}
+                      onClick={() => navigate(`/project/${project.id}`)}
+                    >
+                      {project.title}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className={styles.divider} />
             </div>
           ))}
