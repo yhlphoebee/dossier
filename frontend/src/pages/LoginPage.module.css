@@ -40,7 +40,7 @@
 
 .cardTop {
   background-color: #f4f0ea;
-  height: 363px;
+  height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,7 +57,7 @@
 
 .cardBottom {
   background-color: #cdebf2;
-  padding: 48px 89px 60px;
+  padding: 36px 64px 44px;
   display: flex;
   flex-direction: column;
   align-items: center;

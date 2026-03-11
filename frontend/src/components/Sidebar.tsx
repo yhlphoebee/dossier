@@ -61,7 +61,9 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
     <aside className={styles.sidebar}>
       <div className={styles.top}>
         {/* Logo */}
-        <h1 className={styles.logo}>DOSSIER</h1>
+        <button type="button" className={styles.logo} onClick={() => navigate('/home')}>
+          DOSSIER
+        </button>
 
         <div className={styles.divider} />
 

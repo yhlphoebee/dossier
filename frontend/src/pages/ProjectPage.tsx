@@ -554,7 +554,7 @@ export default function ProjectPage() {
     <div className={styles.layout}>
       {/* Top bar */}
       <header className={styles.header}>
-        <button className={styles.logoLink} onClick={() => navigate('/')}>
+        <button className={styles.logoLink} onClick={() => navigate('/home')}>
           DOSSIER
         </button>
         <input

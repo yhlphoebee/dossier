@@ -59,6 +59,12 @@
   color: var(--color-black);
   padding: 22px 17px 0;
   letter-spacing: -2px;
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 /* ── Divider ── */

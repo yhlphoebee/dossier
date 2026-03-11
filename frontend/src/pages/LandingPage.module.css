@@ -16,7 +16,7 @@
   height: 115px;
   display: flex;
   align-items: center;
-  padding: 0 40px;
+  padding: 0 40px 0 calc(50% - 682px);
   z-index: 10;
 }
 
@@ -74,7 +74,7 @@
 /* ── HERO TEXT ── */
 .heroText {
   position: absolute;
-  top: 200px;
+  top: 260px;
   left: calc(50% - 682px);
   z-index: 10;
 }
@@ -133,12 +133,9 @@
   }
 }
 
-/* ── DIVIDER LINE ── */
+/* ── DIVIDER LINE (inside hero so it sits below text, no fixed top overlap) ── */
 .dividerWrap {
-  position: absolute;
-  top: 509px;
-  left: 68px;
-  z-index: 10;
+  margin-top: 0px;
   display: flex;
   align-items: center;
 }
@@ -158,7 +155,7 @@
   transform: translateY(-50%);
   width: 17px;
   height: 17px;
-  background-color: #000;
+  background-color: #8deaff;
   border-radius: 50%;
 }
 
@@ -167,9 +164,9 @@
   position: absolute;
   left: calc(50% + 315px);
   transform: translateX(-50%);
-  top: 35px;
-  width: 804px;
-  height: 661px;
+  top: 100px;
+  width: 720px;
+  height: 720px;
   z-index: 5;
   overflow: hidden;
   border: none;

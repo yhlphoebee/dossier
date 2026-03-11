@@ -54,7 +54,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero text */}
+      {/* Hero text + divider (grouped so divider sits below text, no overlap) */}
       <div className={styles.heroText}>
         <p className={styles.heroLine1}>{'Design Investigation \nPlatform \nHelps Designers'}</p>
         <div className={styles.heroLine2Wrap}>
@@ -65,12 +65,10 @@ export default function LandingPage() {
             {ROTATING_PHRASES[index]}
           </p>
         </div>
-      </div>
-
-      {/* Cyan divider line */}
-      <div className={styles.dividerWrap}>
-        <div className={styles.dividerLine}>
-          <div className={styles.dividerDot} />
+        <div className={styles.dividerWrap}>
+          <div className={styles.dividerLine}>
+            <div className={styles.dividerDot} />
+          </div>
         </div>
       </div>
 
