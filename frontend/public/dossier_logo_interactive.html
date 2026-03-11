@@ -42,12 +42,6 @@
     font-size:8.5px; letter-spacing:0.22em;
     color:var(--gold); text-transform:uppercase; transition:opacity 0.4s;
   }
-  #meta {
-    position:absolute; top:32px; right:40px;
-    font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;
-    font-size:9.5px; letter-spacing:0.2em;
-    color:var(--dim); text-align:right; line-height:2; text-transform:uppercase;
-  }
   #flat-hint {
     position:absolute; top:74px; right:40px;
     font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;
@@ -96,10 +90,10 @@
 <body>
 <div id="canvas-wrap"><canvas id="overlay"></canvas><canvas id="c"></canvas></div>
 <div id="hud">
-  <a id="back-btn" href="/home" style="position:absolute;top:32px;left:40px;display:flex;align-items:center;gap:6px;font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:#111010;background:rgba(244,241,236,0.85);border:1px solid rgba(17,16,16,0.2);border-radius:100px;padding:8px 16px 8px 12px;cursor:pointer;text-decoration:none;pointer-events:all;backdrop-filter:blur(4px);z-index:10;">← BACK</a>
-  <div id="wordmark" style="top:32px;left:160px;">Dossier</div>
+  <div id="wordmark">Dossier</div>
   <div id="axis-badge">Y — axis locked</div>
-  <div id="meta">3D Identity System<br><span id="hint">Drag to reveal 3D</span></div>
+  <span id="hint" style="display:none;"></span>
+  <a href="/home" style="position:absolute;top:28px;right:40px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:18px;color:var(--ink);background:transparent;border:1px solid rgba(17,16,16,0.25);border-radius:50%;cursor:pointer;text-decoration:none;pointer-events:all;line-height:1;">×</a>
   <div id="flat-hint" class="visible">Viewing in 2D</div>
   <div id="controls">
     <button id="btn-regen">Regenerate</button>

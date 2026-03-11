@@ -223,7 +223,8 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  background: var(--color-accent-cyan);
+  background: #f4f0ea;
+  /* matches logo HTML background so no flash on load */
   position: relative;
   overflow: hidden;
   transition: opacity 0.15s;
