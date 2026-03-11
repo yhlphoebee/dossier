@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import ProjectPage from './pages/ProjectPage'
+import LogoPage from './pages/LogoPage'
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/home" element={<HomePage />} />
       <Route path="/project/:id" element={<ProjectPage />} />
+      <Route path="/logo" element={<LogoPage />} />
     </Routes>
   )
 }

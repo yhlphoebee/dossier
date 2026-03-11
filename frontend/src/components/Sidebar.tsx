@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './Sidebar.module.css'
 
 function ChevronDoubleLeft() {
@@ -39,6 +40,7 @@ interface SidebarProps {
 export default function Sidebar({ searchQuery, onSearchChange, filters, onToggleFilter, collapsible = false }: SidebarProps) {
   const [activeSort, setActiveSort] = useState<SortOption>('Relevant')
   const [collapsed, setCollapsed] = useState(false)
+  const navigate = useNavigate()
 
   if (collapsible && collapsed) {
     return (
@@ -121,17 +123,24 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
           </div>
           <span className={styles.userName}>Lauren Chen</span>
         </div>
-        {collapsible ? (
-          <button
-            className={styles.footerAccentBtn}
-            onClick={() => setCollapsed(true)}
-            aria-label="Collapse sidebar"
-          >
-            <ChevronDoubleLeft />
-          </button>
-        ) : (
-          <div className={styles.footerAccent} />
-        )}
+        <button
+          className={styles.footerLogoBtn}
+          onClick={() => navigate('/logo')}
+          aria-label="Open interactive logo"
+        >
+          <iframe
+            src="/dossier_logo_sidebar.html"
+            title="Dossier Logo"
+            className={styles.footerLogoFrame}
+            scrolling="no"
+            tabIndex={-1}
+          />
+          {collapsible && (
+            <div className={styles.collapseOverlay} onClick={(e) => { e.stopPropagation(); setCollapsed(true); }}>
+              <ChevronDoubleLeft />
+            </div>
+          )}
+        </button>
       </div>
     </aside>
   )

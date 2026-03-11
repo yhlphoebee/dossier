@@ -217,27 +217,42 @@
   font-weight: 400;
 }
 
-.footerAccent {
+.footerLogoBtn {
   width: 111px;
-  background-color: var(--color-accent-cyan);
-  flex-shrink: 0;
-}
-
-/* Cyan square that also acts as the collapse button */
-.footerAccentBtn {
-  width: 111px;
-  background-color: var(--color-accent-cyan);
   flex-shrink: 0;
   border: none;
+  padding: 0;
   cursor: pointer;
-  color: var(--color-white);
+  background: var(--color-accent-cyan);
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.footerLogoBtn:hover {
+  opacity: 0.88;
+}
+
+.footerLogoFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  pointer-events: none;
+}
+
+.collapseOverlay {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  transition: background-color 0.15s;
+  background: rgba(141, 234, 255, 0.7);
+  color: var(--color-black);
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
-.footerAccentBtn:hover {
-  background-color: #6fd8ef;
+.footerLogoBtn:hover .collapseOverlay {
+  opacity: 1;
 }
