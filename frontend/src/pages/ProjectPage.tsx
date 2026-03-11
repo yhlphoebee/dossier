@@ -174,6 +174,8 @@ export default function ProjectPage() {
     concept: [],
     present: [],
   })
+  // Set of source_urls already saved to the dossi board websites folder
+  const [savedBoardUrls, setSavedBoardUrls] = useState<Set<string>>(new Set())
   const [input, setInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [droppedImage, setDroppedImage] = useState<{ src: string; name: string } | null>(null)
@@ -247,27 +249,32 @@ export default function ProjectPage() {
           present: projectData.present_assumptions ?? '',
         })
 
-        // Load per-agent chat history
+        // Load per-agent chat history + saved board URLs in parallel
         const agents: AgentKey[] = ['strategy', 'research', 'concept', 'present']
-        const histories = await Promise.all(
-          agents.map((agent) =>
-            fetch(`/api/projects/${id}/messages?agent=${agent}`).then((r) =>
-              r.ok ? (r.json() as Promise<ChatMessage[]>) : []
+        const [histories, boardItems] = await Promise.all([
+          Promise.all(
+            agents.map((agent) =>
+              fetch(`/api/projects/${id}/messages?agent=${agent}`).then((r) =>
+                r.ok ? (r.json() as Promise<ChatMessage[]>) : []
+              )
             )
-          )
+          ),
+          fetch(`/api/projects/${id}/dossi-board?folder=websites`).then((r) =>
+            r.ok ? (r.json() as Promise<{ source_url: string | null }[]>) : []
+          ),
+        ])
+
+        // Build the set of already-saved URLs
+        const savedUrls = new Set<string>(
+          boardItems.flatMap((item) => (item.source_url ? [item.source_url] : []))
         )
+        setSavedBoardUrls(savedUrls)
 
         const hydrate = (msgs: ChatMessage[], agent: AgentKey) =>
           msgs.map((m) => {
             const base = { ...m, image_src: m.image_url ?? m.image_src }
             if (agent === 'research' && m.role === 'assistant') {
-              const markerIdx = m.content.lastIndexOf('\n\nReferences:\n')
-              console.log(`[hydrate] id=${m.id} markerIdx=${markerIdx} contentLen=${m.content.length} hasCitations=${!!m.citations}`)
-              if (markerIdx !== -1) {
-                console.log(`[hydrate] refBlock preview:`, JSON.stringify(m.content.slice(markerIdx, markerIdx + 120)))
-              }
               const { body, citations } = parseReferencesFromContent(m.content)
-              console.log(`[hydrate] parsed citations count:`, citations.length, citations.slice(0, 2))
               return { ...base, bodyContent: body, citations: citations.length > 0 ? citations : undefined }
             }
             return base
@@ -770,7 +777,13 @@ export default function ProjectPage() {
                                       <a href={c.url} target="_blank" rel="noopener noreferrer" className={styles.chatCitationLink}>
                                         {c.title || c.url}
                                       </a>
-                                      <AddToBoardButton url={c.url} title={c.title} projectId={id!} />
+                                      <AddToBoardButton
+                                        url={c.url}
+                                        title={c.title}
+                                        projectId={id!}
+                                        isSaved={savedBoardUrls.has(c.url)}
+                                        onSaved={(url) => setSavedBoardUrls((prev) => new Set([...prev, url]))}
+                                      />
                                     </li>
                                   ))}
                                 </ul>
@@ -858,42 +871,60 @@ interface AddToBoardButtonProps {
   url: string
   title?: string
   projectId: string
+  isSaved: boolean
+  onSaved: (url: string) => void
 }
 
-function AddToBoardButton({ url, title, projectId }: AddToBoardButtonProps) {
-  const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+function AddToBoardButton({ url, title, projectId, isSaved, onSaved }: AddToBoardButtonProps) {
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(false)
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault()
-    if (state !== 'idle') return
-    setState('saving')
+    if (isSaved || saving) return
+    setSaving(true)
+    setError(false)
     try {
       const res = await fetch(`/api/projects/${projectId}/dossi-board/from-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, title: title || url }),
       })
-      setState(res.ok ? 'saved' : 'error')
+      if (res.ok) {
+        onSaved(url)
+      } else {
+        setError(true)
+        setTimeout(() => setError(false), 2500)
+      }
     } catch {
-      setState('error')
+      setError(true)
+      setTimeout(() => setError(false), 2500)
+    } finally {
+      setSaving(false)
     }
-    setTimeout(() => setState('idle'), 2500)
   }
+
+  const label = isSaved ? 'Already in Dossi Board' : error ? 'Error — try again' : 'Save to Dossi Board'
 
   return (
     <button
-      className={`${styles.addToBoardBtn} ${state === 'saved' ? styles.addToBoardBtnSaved : state === 'error' ? styles.addToBoardBtnError : ''}`}
+      className={`${styles.addToBoardBtn} ${isSaved ? styles.addToBoardBtnSaved : error ? styles.addToBoardBtnError : ''}`}
       onClick={handleClick}
-      title={state === 'saved' ? 'Saved to Dossi Board' : state === 'error' ? 'Already saved or error' : 'Save to Dossi Board'}
-      aria-label="Save to Dossi Board"
+      title={label}
+      aria-label={label}
+      disabled={isSaved || saving}
     >
-      {state === 'saving' ? (
+      {saving ? (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={styles.addToBoardSpinner}>
           <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="14 8" />
         </svg>
-      ) : state === 'saved' ? (
+      ) : isSaved ? (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : error ? (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       ) : (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

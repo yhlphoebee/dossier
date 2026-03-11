@@ -296,13 +296,7 @@ async def send_message(
                     ref_lines.append(f"{idx}. [{label}]({c.url})")
                 reply_text = reply_text + "\n\n" + "\n".join(ref_lines)
 
-            # Also auto-save from parsed structured references if the model returned them
-            if parsed.references:
-                await _save_references_to_dossi_board(project_id, parsed.references, db)
-            elif citations:
-                # Fall back to saving from url_citation annotations
-                ref_objs = [ResearchReference(title=c.title or c.url, url=c.url) for c in citations]
-                await _save_references_to_dossi_board(project_id, ref_objs, db)
+            # References are saved manually by the user via the + button in the chat UI
         else:
             # Chat Completions for non-Research agents
             client = AsyncOpenAI(api_key=api_key)

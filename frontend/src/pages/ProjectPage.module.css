@@ -678,6 +678,8 @@
   border-color: #4caf50;
   color: #4caf50;
   background-color: #f0fff0;
+  cursor: default;
+  opacity: 0.85;
 }
 
 .addToBoardBtnError {
