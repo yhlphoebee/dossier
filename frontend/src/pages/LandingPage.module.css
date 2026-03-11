@@ -74,8 +74,8 @@
 /* ── HERO TEXT ── */
 .heroText {
   position: absolute;
-  top: 139px;
-  left: 40px;
+  top: 200px;
+  left: calc(50% - 682px);
   z-index: 10;
 }
 
@@ -84,14 +84,14 @@
   font-weight: 400;
   color: #000;
   line-height: 1.01;
-  max-width: 490px;
+  width: 503px;
+  white-space: pre-wrap;
 }
 
-.heroRight {
-  position: absolute;
-  top: 168px;
-  right: 40px;
-  z-index: 10;
+.heroLine2Wrap {
+  margin-top: 42px;
+  overflow: hidden;
+  height: 72px;
 }
 
 .heroLine2 {
@@ -99,23 +99,53 @@
   font-weight: 400;
   color: #000;
   line-height: 1.01;
+  display: block;
+  transform-origin: top center;
+}
+
+.heroLine2Out {
+  animation: fadeSlideOut 0.5s ease-in forwards;
+}
+
+.heroLine2In {
+  animation: fadeSlideIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeSlideOut {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-14px);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeSlideIn {
+  0% {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ── DIVIDER LINE ── */
 .dividerWrap {
   position: absolute;
-  top: 240px;
-  left: 40px;
-  right: 40px;
+  top: 509px;
+  left: 68px;
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
 }
 
 .dividerLine {
   height: 6px;
-  width: 897px;
+  width: 421px;
   background-color: #8deaff;
   border-radius: 17px;
   position: relative;
@@ -135,11 +165,11 @@
 /* ── LOGO IFRAME ── */
 .logoWrap {
   position: absolute;
-  left: 50%;
+  left: calc(50% + 315px);
   transform: translateX(-50%);
-  top: 290px;
-  width: 756px;
-  height: 622px;
+  top: 35px;
+  width: 804px;
+  height: 661px;
   z-index: 5;
   overflow: hidden;
   border: none;

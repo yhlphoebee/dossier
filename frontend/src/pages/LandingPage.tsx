@@ -1,8 +1,44 @@
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
 import styles from './LandingPage.module.css'
+
+const ROTATING_PHRASES = [
+  'Organize research',
+  'Analyze evidence',
+  'Build confidence',
+  'Clarify decisions',
+]
+
+function pickNext(current: number) {
+  const next = Math.floor(Math.random() * (ROTATING_PHRASES.length - 1))
+  return next >= current ? next + 1 : next
+}
+
+// phase: 'idle' | 'out' | 'in'
+type Phase = 'idle' | 'out' | 'in'
 
 export default function LandingPage() {
   const navigate = useNavigate()
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * ROTATING_PHRASES.length))
+  const [phase, setPhase] = useState<Phase>('idle')
+  const nextIndex = useRef<number>(index)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      nextIndex.current = pickNext(index)
+      setPhase('out')
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [index])
+
+  function handleAnimationEnd() {
+    if (phase === 'out') {
+      setIndex(nextIndex.current)
+      setPhase('in')
+    } else if (phase === 'in') {
+      setPhase('idle')
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -18,14 +54,17 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero text left */}
+      {/* Hero text */}
       <div className={styles.heroText}>
-        <p className={styles.heroLine1}>Design Investigation Platform Helps Designers</p>
-      </div>
-
-      {/* Hero text right */}
-      <div className={styles.heroRight}>
-        <p className={styles.heroLine2}>Clarify Decisions</p>
+        <p className={styles.heroLine1}>{'Design Investigation \nPlatform \nHelps Designers'}</p>
+        <div className={styles.heroLine2Wrap}>
+          <p
+            className={`${styles.heroLine2} ${phase === 'out' ? styles.heroLine2Out : ''} ${phase === 'in' ? styles.heroLine2In : ''}`}
+            onAnimationEnd={handleAnimationEnd}
+          >
+            {ROTATING_PHRASES[index]}
+          </p>
+        </div>
       </div>
 
       {/* Cyan divider line */}
