@@ -127,8 +127,9 @@
   left: 12px;
   right: 12px;
   height: 2px;
-  background-color: #7ecfea;
+  background-color: var(--accent, #7ecfea);
   border-radius: 2px 2px 0 0;
+  transition: background-color 0.3s;
 }
 
 /* ── Case file card ── */
@@ -158,8 +159,8 @@
 
 .updateBtn {
   background: #fff;
-  border: 1.5px solid #7ecfea;
-  color: #5ab8d8;
+  border: 1.5px solid var(--accent, #7ecfea);
+  color: var(--accent, #5ab8d8);
   border-radius: 20px;
   padding: 5px 16px;
   font-family: var(--font-display);
@@ -167,17 +168,17 @@
   font-weight: 500;
   letter-spacing: 0.08em;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 0.15s, color 0.15s, border-color 0.3s;
 }
 
 .updateBtn:hover:not(:disabled) {
-  background-color: #edf9fd;
+  background-color: color-mix(in srgb, var(--accent, #7ecfea) 20%, white);
 }
 
 .updateBtnSaved {
-  border-color: #5ab8d8;
-  background-color: #edf9fd;
-  color: #3aa0c0;
+  border-color: var(--accent, #5ab8d8);
+  background-color: color-mix(in srgb, var(--accent, #7ecfea) 20%, white);
+  color: var(--accent, #3aa0c0);
 }
 
 .cardDivider {
@@ -217,12 +218,42 @@
 }
 
 .clarityDotActive {
-  background-color: #7ecfea;
+  background-color: var(--accent, #7ecfea);
+  transition: background-color 0.3s;
 }
 
-/* ── Key statement block ── */
-.statementBlock {
-  padding: 12px 20px 14px;
+@keyframes dotPulse {
+  0%, 100% { background-color: #d8d8d8; transform: scale(1); }
+  50% { background-color: var(--accent, #7ecfea); transform: scale(1.35); }
+}
+
+.clarityDotsLoading .clarityDot {
+  animation: dotPulse 0.9s ease-in-out infinite;
+}
+
+/* ── Section blocks (always open) ── */
+.sectionBlock {
+  padding: 14px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionLabel {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sectionHint {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #aaa;
+  font-style: italic;
+  margin-top: -2px;
 }
 
 .statementInput {
@@ -232,69 +263,42 @@
   outline: none;
   resize: none;
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 400;
   color: #222;
   line-height: 1.55;
   caret-color: #222;
   box-sizing: border-box;
+  margin-top: 2px;
+  min-height: 3.6em;
+  field-sizing: content;
+  overflow-y: hidden;
 }
 
 .statementInput::placeholder {
-  color: #c0c0c0;
+  color: #c8c8c8;
 }
 
-/* ── Accordion rows ── */
-.accordionRow {
-  padding: 0;
-}
-
-.accordionHeader {
+.sectionTextarea {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 20px;
   background: none;
   border: none;
-  cursor: pointer;
-  text-align: left;
-}
-
-.accordionLabel {
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: #aaa;
-  font-weight: 400;
-}
-
-.chevron {
-  flex-shrink: 0;
-  transition: transform 0.2s;
-}
-
-.chevronOpen {
-  transform: rotate(180deg);
-}
-
-.accordionTextarea {
-  width: 100%;
-  background: #fafafa;
-  border: none;
-  border-top: 1px solid #ebebeb;
   outline: none;
   resize: none;
   font-family: var(--font-body);
   font-size: 14px;
   color: #333;
-  line-height: 1.55;
-  padding: 14px 20px;
-  box-sizing: border-box;
+  line-height: 1.6;
   caret-color: #333;
+  box-sizing: border-box;
+  margin-top: 2px;
+  min-height: 4.8em;
+  field-sizing: content;
+  overflow-y: hidden;
 }
 
-.accordionTextarea::placeholder {
-  color: #c0c0c0;
+.sectionTextarea::placeholder {
+  color: #c8c8c8;
 }
 
 /* ── Dossi Board ── */
@@ -308,12 +312,13 @@
 
 .dossiBoardLeft {
   width: 180px;
-  background-color: #a3eeff;
+  background-color: var(--accent, #a3eeff);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   padding: 24px 24px;
   flex-shrink: 0;
+  transition: background-color 0.3s;
 }
 
 .dossiBoardTitle {
@@ -343,18 +348,11 @@
 
 .dossiBoardRight {
   flex: 1;
-  background-color: #effcff;
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 20%, white);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   overflow: hidden;
-}
-
-.dossiBoardImg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 16px;
+  transition: background-color 0.3s;
 }
 
 /* ── Normal panel content wrapper ── */
@@ -437,6 +435,7 @@
 /* ── Chat panel ── */
 .chatPanel {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -446,25 +445,27 @@
 .chatMessages {
   flex: 1;
   overflow-y: auto;
-  padding: 40px 48px;
+  padding: 40px clamp(12px, 2vw, 24px) 8px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
-.chatPrompt {
-  font-family: var(--font-body);
-  font-size: 18px;
-  color: var(--color-black);
-  margin-top: auto;
-  padding-bottom: 16px;
+.chatEmptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .chatMessageGroup {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: 75%;
+  max-width: min(75%, 100%);
+  min-width: 0;
+  word-break: break-word;
 }
 
 .chatMessageGroupUser {
@@ -475,6 +476,45 @@
 .chatMessageGroupAssistant {
   align-self: flex-start;
   align-items: flex-start;
+}
+
+/* ── Message row — wraps avatar + bubble side by side ── */
+.chatMessageRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.chatMessageRowUser {
+  flex-direction: row-reverse;
+}
+
+.chatMessageRowAssistant {
+  flex-direction: row;
+}
+
+/* ── Avatar ── */
+.agentAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--accent, #93ccff) 22%, white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.agentAvatarHidden {
+  visibility: hidden;
+}
+
+.agentAvatar svg {
+  width: 100%;
+  height: 100%;
 }
 
 .chatBubbleImage {
@@ -490,13 +530,16 @@
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.5;
-  white-space: pre-wrap;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .chatBubbleUser {
-  background-color: var(--color-accent-blue);
-  color: var(--color-white);
+  background-color: color-mix(in srgb, var(--accent, var(--color-accent-blue)) 20%, white);
+  color: #111;
   border-bottom-right-radius: 4px;
+  white-space: pre-wrap;
 }
 
 .chatBubbleAssistant {
@@ -505,43 +548,61 @@
   border-bottom-left-radius: 4px;
 }
 
-/* Markdown in assistant bubbles – tight spacing, no extra lines */
+/* Markdown in assistant bubbles — matches screenshot: tight notes-doc feel */
 .chatMarkdown {
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.5;
+  color: var(--color-text-primary);
 }
 
+/* Paragraphs: small bottom gap, no top */
 .chatMarkdown :global(p) {
-  margin: 0 0 0.4em;
+  margin: 0 0 6px;
 }
-
 .chatMarkdown :global(p:last-child) {
   margin-bottom: 0;
 }
 
+/* h1–h3: bold section title, 20px gap above (except first), 2px below */
 .chatMarkdown :global(h1),
 .chatMarkdown :global(h2),
-.chatMarkdown :global(h3),
-.chatMarkdown :global(h4) {
-  margin: 0.9em 0 0.2em;
-  font-weight: 600;
-  line-height: 1.3;
+.chatMarkdown :global(h3) {
+  margin: 20px 0 2px;
+  font-weight: 700;
+  font-size: 1em;
+  line-height: 1.4;
+  color: var(--color-text-primary);
 }
-
-.chatMarkdown :global(h1) { font-size: 1.35em; }
-.chatMarkdown :global(h2) { font-size: 1.2em; }
-.chatMarkdown :global(h3) { font-size: 1.1em; }
-.chatMarkdown :global(h4) { font-size: 1em; }
-
 .chatMarkdown :global(h1:first-child),
 .chatMarkdown :global(h2:first-child),
-.chatMarkdown :global(h3:first-child),
+.chatMarkdown :global(h3:first-child) {
+  margin-top: 0;
+}
+
+/* h4: small muted label */
+.chatMarkdown :global(h4) {
+  margin: 18px 0 2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+}
 .chatMarkdown :global(h4:first-child) {
   margin-top: 0;
 }
 
-/* Collapse empty paragraphs that ReactMarkdown injects between headings and lists */
+/* Heading → paragraph: no extra gap */
+.chatMarkdown :global(h1 + p),
+.chatMarkdown :global(h2 + p),
+.chatMarkdown :global(h3 + p),
+.chatMarkdown :global(h4 + p) {
+  margin-top: 0;
+}
+
+/* Collapse empty paragraphs ReactMarkdown injects */
 .chatMarkdown :global(h1 + p:empty),
 .chatMarkdown :global(h2 + p:empty),
 .chatMarkdown :global(h3 + p:empty),
@@ -549,29 +610,40 @@
   display: none;
 }
 
-.chatMarkdown :global(h1 + p),
-.chatMarkdown :global(h2 + p),
-.chatMarkdown :global(h3 + p),
-.chatMarkdown :global(h4 + p) {
-  margin-top: 0.25em;
-}
-
+/* Lists: flush to heading, small gap after */
 .chatMarkdown :global(ul),
 .chatMarkdown :global(ol) {
-  margin: 0;
-  padding-left: 1.5em;
+  margin: 2px 0 6px;
+  padding-left: 1.3em;
+}
+.chatMarkdown :global(h1 + ul),
+.chatMarkdown :global(h2 + ul),
+.chatMarkdown :global(h3 + ul),
+.chatMarkdown :global(h4 + ul),
+.chatMarkdown :global(h1 + ol),
+.chatMarkdown :global(h2 + ol),
+.chatMarkdown :global(h3 + ol),
+.chatMarkdown :global(h4 + ol) {
+  margin-top: 0;
 }
 
+/* Bullets: no gap between items */
 .chatMarkdown :global(li) {
   margin: 0;
+  padding: 0;
+  line-height: 1.5;
 }
-
 .chatMarkdown :global(li > p) {
   margin: 0;
+}
+.chatMarkdown :global(li p:first-of-type) {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .chatMarkdown :global(strong) {
   font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .chatMarkdown :global(code) {
@@ -644,6 +716,7 @@
   text-decoration: underline;
   font-size: 13px;
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -698,33 +771,124 @@
 /* Typing indicator */
 .chatLoading {
   display: flex;
-  gap: 5px;
+  flex-direction: row;
   align-items: center;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 10px 16px 10px 10px;
   align-self: flex-start;
 }
 
-.chatLoading span {
-  width: 8px;
-  height: 8px;
+.chatLoadingSvg {
+  width: 44px;
+  height: 44px;
+  display: block;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.chatLoadingDots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.chatLoadingDots span {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: #aaa;
   animation: bounce 1.2s infinite ease-in-out;
 }
 
-.chatLoading span:nth-child(2) { animation-delay: 0.2s; }
-.chatLoading span:nth-child(3) { animation-delay: 0.4s; }
+.chatLoadingDots span:nth-child(2) { animation-delay: 0.2s; }
+.chatLoadingDots span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes bounce {
   0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
-  40% { transform: scale(1); opacity: 1; }
+  40%            { transform: scale(1);   opacity: 1;   }
+}
+
+/* Reuse the same keyframes from StrategistIdle */
+@keyframes browArcDraw {
+  0%   { stroke-dashoffset: 220;  }
+  28%  { stroke-dashoffset: 0;    }
+  62%  { stroke-dashoffset: 0;    }
+  88%  { stroke-dashoffset: -220; }
+  99%  { stroke-dashoffset: -220; }
+  100% { stroke-dashoffset: 220;  }
+}
+
+@keyframes browTickDraw {
+  0%   { stroke-dashoffset: -190; }
+  8%   { stroke-dashoffset: -190; }
+  34%  { stroke-dashoffset: 0;    }
+  62%  { stroke-dashoffset: 0;    }
+  90%  { stroke-dashoffset: 190;  }
+  99%  { stroke-dashoffset: 190;  }
+  100% { stroke-dashoffset: -190; }
+}
+
+.loadingBrowArc {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation:
+    browArcDraw   2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite,
+    loadingBrowArcRotate 2.8s ease-in-out infinite;
+}
+
+@keyframes loadingBrowArcRotate {
+  0%   { transform: rotate(0deg);   }
+  30%  { transform: rotate(-8deg);  }
+  60%  { transform: rotate(-14deg); }
+  80%  { transform: rotate(-6deg);  }
+  100% { transform: rotate(0deg);   }
+}
+
+.loadingBrowTick {
+  stroke-dasharray: 190;
+  stroke-dashoffset: -190;
+  animation:
+    browTickDraw   2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite,
+    loadingBrowTickRotate 2.8s ease-in-out infinite;
+}
+
+@keyframes loadingBrowTickRotate {
+  0%   { transform: rotate(0deg);  }
+  20%  { transform: rotate(12deg); }
+  50%  { transform: rotate(5deg);  }
+  75%  { transform: rotate(18deg); }
+  100% { transform: rotate(0deg);  }
+}
+
+.loadingEyeLeft {
+  fill: #111010;
+  animation: loadingEyeLeftGlance 3.2s ease-in-out infinite;
+}
+
+@keyframes loadingEyeLeftGlance {
+  0%   { transform: translate(0px,   0px); }
+  40%  { transform: translate(0px,   0px); }
+  65%  { transform: translate(-14px, 0px); }
+  100% { transform: translate(0px,   0px); }
+}
+
+.loadingEyeRight {
+  fill: #111010;
+  animation: loadingEyeRightGlance 3.2s ease-in-out infinite;
+}
+
+@keyframes loadingEyeRightGlance {
+  0%   { transform: translate(0px,  0px);  }
+  40%  { transform: translate(0px,  0px);  }
+  65%  { transform: translate(22px, 18px); }
+  100% { transform: translate(0px,  0px);  }
 }
 
 /* ── Chat input bar ── */
 .chatInputBar {
   flex-shrink: 0;
-  margin: 20px 20px 24px;
-  background-color: #f5fdff;
+  margin: 8px 20px 16px;
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 20%, white);
   border-radius: 24px;
   display: flex;
   flex-direction: column;

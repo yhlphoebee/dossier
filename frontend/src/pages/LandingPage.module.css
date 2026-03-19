@@ -1,11 +1,14 @@
 .page {
   width: 100vw;
   height: 100vh;
-  background-color: #f4f0ea;
+  background: linear-gradient(-45deg, #c9bfb2, #f4f0ea, #e8e0d5, #f4f0ea, #c9bfb2);
+  background-size: 300% 300%;
+  animation: gradientMove 8s ease infinite;
   position: relative;
   overflow: hidden;
   font-family: var(--font-display);
 }
+
 
 /* ── NAV ── */
 .nav {
@@ -35,17 +38,17 @@
 }
 
 .navLinkOutline {
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 400;
   color: #000;
-  padding: 0 28px;
-  height: 51px;
+  padding: 0 30px;
+  height: 40px;
   border: 1px solid #000;
   border-radius: 196px;
   display: flex;
   align-items: center;
   cursor: pointer;
-  margin-right: 6px;
+  margin-right: 5px;
   white-space: nowrap;
   text-decoration: none;
 }
@@ -55,11 +58,11 @@
 }
 
 .navLinkFilled {
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 400;
   color: #fff;
-  padding: 0 28px;
-  height: 51px;
+  padding: 0 30px;
+  height: 40px;
   background-color: #8deaff;
   border-radius: 196px;
   display: flex;
@@ -68,7 +71,7 @@
   white-space: nowrap;
   text-decoration: none;
   border: none;
-  margin-left: 6px;
+  margin-left: 5px;
 }
 
 /* ── HERO TEXT ── */
@@ -81,7 +84,7 @@
 
 .heroLine1 {
   font-size: 58px;
-  font-weight: 400;
+  font-weight: 450;
   color: #000;
   line-height: 1.01;
   width: 503px;
@@ -138,6 +141,7 @@
   margin-top: 0px;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .dividerLine {
@@ -146,17 +150,50 @@
   background-color: #8deaff;
   border-radius: 17px;
   position: relative;
+  transform-origin: left center;
+}
+
+.dividerLineSweep {
+  animation: dividerLineSweep 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes dividerLineSweep {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0% 0 0);
+  }
 }
 
 .dividerDot {
   position: absolute;
-  right: -8px;
   top: 50%;
   transform: translateY(-50%);
   width: 17px;
   height: 17px;
   background-color: #8deaff;
   border-radius: 50%;
+}
+
+/* Before first phrase change: dot sits at the right end of the bar */
+.dividerDotRest {
+  /* 421px bar width, dot is 17px wide, overhang 8px → center at 421 - 8 = 413px */
+  left: 413px;
+}
+
+/* Each new phrase: dot travels left → right */
+.dividerDotSweep {
+  animation: dividerDotSweep 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes dividerDotSweep {
+  0% {
+    left: -8px;
+  }
+  100% {
+    left: 413px;
+  }
 }
 
 /* ── LOGO IFRAME ── */
@@ -170,6 +207,7 @@
   z-index: 5;
   overflow: hidden;
   border: none;
+  background: transparent;
 }
 
 .logoFrame {
@@ -177,4 +215,10 @@
   height: 100%;
   border: none;
   background: transparent;
+}
+
+@keyframes gradientMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }

@@ -1,0 +1,78 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 16px 20px 0;
+  box-sizing: border-box;
+  gap: 0;
+  background-color: transparent;
+}
+
+/* ── Title input ── */
+.titleInput {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.18);
+  outline: none;
+  font-family: var(--font-body, sans-serif);
+  font-size: 13px;
+  font-weight: 400;
+  color: #111;
+  padding: 0 0 8px;
+  letter-spacing: 0.01em;
+  text-align: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.titleInput::placeholder {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+/* ── SVG grid area — square, centered ── */
+.svgWrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.svgWrap svg {
+  /* Constrain to a square using the smaller of width/height */
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
+/* ── Gradient bar ── */
+.gradientBar {
+  flex-shrink: 0;
+  height: 32px;
+  margin: 0 -20px;
+  background: linear-gradient(to right, #FFC8FC, #CDB8FF, #93CCFF, #77E6FF);
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.gradientThumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}

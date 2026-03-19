@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from 'react'
 import styles from './DossiBoard.module.css'
 
 type FolderTab = 'images' | 'typefaces' | 'websites'
@@ -14,9 +14,25 @@ interface DossiBoardItem {
   created_at: string
 }
 
+type AgentKey = 'strategy' | 'research' | 'concept' | 'present'
+
+const AGENT_TABS: { key: AgentKey; label: string }[] = [
+  { key: 'strategy', label: 'Strategist' },
+  { key: 'research', label: 'Researcher' },
+  { key: 'concept', label: 'Director' },
+  { key: 'present', label: 'Presenter' },
+]
+
+export interface DossiBoardHandle {
+  refreshItems: () => void
+  switchToWebsites: () => void
+}
+
 interface DossiBoardProps {
   projectId: string
   onCollapse: () => void
+  activeAgent: AgentKey
+  onAgentChange: (agent: AgentKey) => void
 }
 
 const FOLDER_TABS: { key: FolderTab; label: string }[] = [
@@ -25,7 +41,10 @@ const FOLDER_TABS: { key: FolderTab; label: string }[] = [
   { key: 'websites', label: 'Websites' },
 ]
 
-export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
+const DossiBoard = forwardRef<DossiBoardHandle, DossiBoardProps>(function DossiBoard(
+  { projectId, onCollapse, activeAgent, onAgentChange },
+  ref,
+) {
   const [activeTab, setActiveTab] = useState<FolderTab>('images')
   const [items, setItems] = useState<DossiBoardItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -49,6 +68,14 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
   useEffect(() => {
     fetchItems()
   }, [fetchItems])
+
+  useImperativeHandle(ref, () => ({
+    refreshItems: fetchItems,
+    switchToWebsites: () => {
+      setActiveTab('websites')
+      fetchItems()
+    },
+  }), [fetchItems])
 
   const uploadFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files)
@@ -198,6 +225,17 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
         <div className={styles.bottomLeft}>
           <span className={styles.bottomTitle}>Dossi Board</span>
         </div>
+        <div className={styles.bottomAgents}>
+          {AGENT_TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              className={`${styles.agentTab} ${activeAgent === key ? styles.agentTabActive : ''}`}
+              onClick={() => onAgentChange(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className={styles.bottomRight}>
           <button
             className={styles.collapseBtn}
@@ -205,15 +243,17 @@ export default function DossiBoard({ projectId, onCollapse }: DossiBoardProps) {
             aria-label="Collapse Dossi Board"
           >
             <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
-              <line x1="110" y1="10" x2="10" y2="110" stroke="#45DAF1" strokeWidth="10" strokeLinecap="round" />
-              <polyline points="118,110 10,110 10,2" stroke="#45DAF1" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <line x1="110" y1="10" x2="10" y2="110" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
+              <polyline points="118,110 10,110 10,2" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </svg>
           </button>
         </div>
       </div>
     </div>
   )
-}
+})
+
+export default DossiBoard
 
 // ── Masonry grid ─────────────────────────────────────────────────────────────
 

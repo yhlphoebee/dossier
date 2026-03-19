@@ -121,7 +121,8 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
                       className={styles.projectItem}
                       onClick={() => navigate(`/project/${project.id}`, { state: { openDossiBoard: true } })}
                     >
-                      {project.title}
+                      <span className={styles.projectItemText}>{project.title}</span>
+                      <span className={styles.projectItemArrow} aria-hidden="true">→</span>
                     </button>
                   ))}
                 </div>

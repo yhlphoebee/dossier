@@ -187,35 +187,49 @@
   max-height: 200px;
   overflow-y: auto;
   margin: 0 24px;
-  padding: 10px 0;
-  border-radius: 4px;
+  padding: 10px 8px 10px 0;
 }
 
 .projectItem {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
   text-align: left;
-  padding: 8px 12px;
-  margin-bottom: 4px;
+  padding: 8px 0;
+  margin-bottom: 2px;
   background: none;
   border: none;
   font-family: var(--font-body);
   font-size: 16px;
   color: var(--color-text-primary);
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.15s;
 }
 
-.projectItem:hover {
-  background-color: var(--color-accent-cyan);
-  color: var(--color-black);
+.projectItemText {
+  flex: 1;
+  text-align: left;
+}
+
+.projectItemArrow {
+  flex-shrink: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--color-text-primary);
+  opacity: 0.5;
+  transform: translateX(0);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.projectItem:hover .projectItemArrow {
+  opacity: 1;
+  transform: translateX(4px);
 }
 
 /* ── Footer ── */
 .footer {
   display: flex;
-  height: 109px;
+  height: 160px;
   flex-shrink: 0;
 }
 
@@ -254,7 +268,7 @@
 }
 
 .footerLogoBtn {
-  width: 111px;
+  width: 160px;
   flex-shrink: 0;
   border: none;
   padding: 0;
