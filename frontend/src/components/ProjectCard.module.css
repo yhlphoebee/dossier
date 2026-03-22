@@ -67,6 +67,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 58%;
+  height: 58%;
 }
 
 /* .thumbnailPlaceholder — reserved when no image */
