@@ -135,6 +135,20 @@ const AGENT_CONFIG: Record<AgentKey, AgentConfig> = {
   },
 }
 
+/** Static agent mark shown beside the latest assistant reply (and extracted to avoid duplicating SVG). */
+function AgentAvatarFace() {
+  return (
+    <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
+      <path fill="none" d="M476.24,215.84c25.14-23.32,60.06-32.6,93.4-24.82,32.53,7.58,59.46,30.62,72.04,61.62" stroke="#111" strokeWidth="33" strokeLinecap="round"/>
+      <line x1="752.84" y1="230" x2="914.09" y2="135" stroke="#111" strokeWidth="33" strokeLinecap="round"/>
+      <circle fill="#111" cx="651.01" cy="351.83" r="46.59"/>
+      <circle fill="#111" cx="803.71" cy="351.13" r="46.59"/>
+      <path fill="#111" d="M846.08,623.11h-109.75c-9.1,0-16.48-7.38-16.48-16.48s7.38-16.48,16.48-16.48h109.75c9.1,0,16.48,7.38,16.48,16.48s-7.38,16.48-16.48,16.48Z"/>
+    </svg>
+  )
+}
+
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -625,6 +639,14 @@ export default function ProjectPage() {
   const currentAgent: AgentKey = TAB_KEYS[activeTab]
   const messages = messagesByAgent[currentAgent]
 
+  let lastAssistantIndex = -1
+  for (let idx = messages.length - 1; idx >= 0; idx--) {
+    if (messages[idx].role === 'assistant') {
+      lastAssistantIndex = idx
+      break
+    }
+  }
+
   return (
     <div className={styles.layout}>
       {/* Top bar */}
@@ -803,7 +825,8 @@ export default function ProjectPage() {
 
         {/* ── Right panel: AI Chat ── */}
         <main className={styles.chatPanel}>
-          <div className={styles.chatMessages}>
+          <div className={styles.chatScroll}>
+            <div className={styles.chatMessages}>
             {messages.length === 0 && (
               <div className={styles.chatEmptyState}>
                 {currentAgent === 'strategy' && <StrategistIdle />}
@@ -815,78 +838,75 @@ export default function ProjectPage() {
                 key={i}
                 className={`${styles.chatMessageRow} ${msg.role === 'user' ? styles.chatMessageRowUser : styles.chatMessageRowAssistant}`}
               >
-                {/* Avatar — left of bubble, only on last message of each assistant run, pinned to bottom */}
+                {/* Avatar — only beside the latest assistant turn (hidden while a new reply is loading) */}
                 {msg.role === 'assistant' && (
-                  <div className={`${styles.agentAvatar} ${(i === messages.length - 1 || messages[i + 1]?.role !== 'assistant') ? '' : styles.agentAvatarHidden}`}>
-                    <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
-                      <path fill="none" d="M476.24,215.84c25.14-23.32,60.06-32.6,93.4-24.82,32.53,7.58,59.46,30.62,72.04,61.62" stroke="#111" strokeWidth="33" strokeLinecap="round"/>
-                      <line x1="752.84" y1="230" x2="914.09" y2="135" stroke="#111" strokeWidth="33" strokeLinecap="round"/>
-                      <circle fill="#111" cx="651.01" cy="351.83" r="46.59"/>
-                      <circle fill="#111" cx="803.71" cy="351.13" r="46.59"/>
-                      <path fill="#111" d="M846.08,623.11h-109.75c-9.1,0-16.48-7.38-16.48-16.48s7.38-16.48,16.48-16.48h109.75c9.1,0,16.48,7.38,16.48,16.48s-7.38,16.48-16.48,16.48Z"/>
-                    </svg>
+                  <div
+                    className={`${styles.agentAvatar} ${i === lastAssistantIndex && !chatLoading ? '' : styles.agentAvatarHidden}`}
+                  >
+                    <AgentAvatarFace />
                   </div>
                 )}
                 <div className={`${styles.chatMessageGroup} ${msg.role === 'user' ? styles.chatMessageGroupUser : styles.chatMessageGroupAssistant}`}>
                   {msg.role === 'user' && msg.image_src && (
                     <img src={msg.image_src} alt="attached" className={styles.chatBubbleImage} />
                   )}
-                  {(msg.role === 'assistant' || msg.content) && (
-                    <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant}`}>
-                      {msg.role === 'assistant' ? (
-                        <>
-                          <div className={styles.chatMarkdown}>
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.bodyContent ?? msg.content}</ReactMarkdown>
+                  {(msg.role === 'assistant' || msg.content) &&
+                    (msg.role === 'assistant' ? (
+                      <div className={styles.assistantMessage}>
+                        <div className={styles.chatMarkdown}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.bodyContent ?? msg.content}</ReactMarkdown>
+                        </div>
+                        {msg.citations && msg.citations.length > 0 && (
+                          <div className={styles.chatCitations}>
+                            <ul className={styles.chatCitationsList}>
+                              {msg.citations.map((c, j) => (
+                                <li key={j} className={styles.chatCitationItem}>
+                                  <a href={c.url} target="_blank" rel="noopener noreferrer" className={styles.chatCitationLink}>
+                                    {c.title || c.url}
+                                  </a>
+                                  <AddToBoardButton
+                                    url={c.url}
+                                    title={c.title}
+                                    projectId={id!}
+                                    isSaved={savedBoardUrls.has(c.url)}
+                                    onSaved={(url) => {
+                                      setSavedBoardUrls((prev) => new Set([...prev, url]))
+                                      dossiBoardRef.current?.switchToWebsites()
+                                    }}
+                                  />
+                                </li>
+                              ))}
+                            </ul>
                           </div>
-                          {msg.citations && msg.citations.length > 0 && (
-                            <div className={styles.chatCitations}>
-                              <ul className={styles.chatCitationsList}>
-                                {msg.citations.map((c, j) => (
-                                  <li key={j} className={styles.chatCitationItem}>
-                                    <a href={c.url} target="_blank" rel="noopener noreferrer" className={styles.chatCitationLink}>
-                                      {c.title || c.url}
-                                    </a>
-                                    <AddToBoardButton
-                                      url={c.url}
-                                      title={c.title}
-                                      projectId={id!}
-                                      isSaved={savedBoardUrls.has(c.url)}
-                                      onSaved={(url) => {
-                                        setSavedBoardUrls((prev) => new Set([...prev, url]))
-                                        dossiBoardRef.current?.switchToWebsites()
-                                      }}
-                                    />
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        msg.content
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    ) : (
+                      <div className={`${styles.chatBubble} ${styles.chatBubbleUser}`}>{msg.content}</div>
+                    ))}
                 </div>
               </div>
             ))}
             {chatLoading && (
-              <div className={`${styles.chatBubble} ${styles.chatBubbleAssistant} ${styles.chatLoading}`}>
-                <svg className={styles.chatLoadingSvg} viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
-                  <path className={styles.loadingBrowArc} fill="none" d="M476.24,215.84c25.14-23.32,60.06-32.6,93.4-24.82,32.53,7.58,59.46,30.62,72.04,61.62" stroke="#111" strokeWidth="33" strokeLinecap="round" style={{ transformOrigin: '575px 225px' }}/>
-                  <line className={styles.loadingBrowTick} x1="752.84" y1="230" x2="914.09" y2="135" stroke="#111" strokeWidth="33" strokeLinecap="round" style={{ transformOrigin: '833px 183px' }}/>
-                  <g className={styles.loadingEyeLeft}><circle fill="#111" cx="651.01" cy="351.83" r="46.59"/></g>
-                  <g className={styles.loadingEyeRight}><circle fill="#111" cx="803.71" cy="351.13" r="46.59"/></g>
-                  <path fill="#111" d="M846.08,623.11h-109.75c-9.1,0-16.48-7.38-16.48-16.48s7.38-16.48,16.48-16.48h109.75c9.1,0,16.48,7.38,16.48,16.48s-7.38,16.48-16.48,16.48Z"/>
-                </svg>
-                <div className={styles.chatLoadingDots}>
-                  <span /><span /><span />
+              <div className={`${styles.chatMessageRow} ${styles.chatMessageRowAssistant}`}>
+                <div className={styles.agentAvatar}>
+                  <svg className={styles.chatLoadingSvg} viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
+                    <path className={styles.loadingBrowArc} fill="none" d="M476.24,215.84c25.14-23.32,60.06-32.6,93.4-24.82,32.53,7.58,59.46,30.62,72.04,61.62" stroke="#111" strokeWidth="33" strokeLinecap="round" style={{ transformOrigin: '575px 225px' }}/>
+                    <line className={styles.loadingBrowTick} x1="752.84" y1="230" x2="914.09" y2="135" stroke="#111" strokeWidth="33" strokeLinecap="round" style={{ transformOrigin: '833px 183px' }}/>
+                    <g className={styles.loadingEyeLeft}><circle fill="#111" cx="651.01" cy="351.83" r="46.59"/></g>
+                    <g className={styles.loadingEyeRight}><circle fill="#111" cx="803.71" cy="351.13" r="46.59"/></g>
+                    <path fill="#111" d="M846.08,623.11h-109.75c-9.1,0-16.48-7.38-16.48-16.48s7.38-16.48,16.48-16.48h109.75c9.1,0,16.48,7.38,16.48,16.48s-7.38,16.48-16.48,16.48Z"/>
+                  </svg>
+                </div>
+                <div className={styles.chatLoading}>
+                  <div className={styles.chatLoadingDots}>
+                    <span /><span /><span />
+                  </div>
                 </div>
               </div>
             )}
             <div ref={chatEndRef} />
+            </div>
           </div>
 
           {/* Chat input bar */}
