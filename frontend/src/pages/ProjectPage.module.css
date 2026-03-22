@@ -435,6 +435,8 @@
 /* ── Chat panel ── */
 .chatPanel {
   --chat-column-fraction: 70%;
+  /* Same horizontal inset as .chatMessages so the input aligns with response text */
+  --chat-column-padding-inline: clamp(12px, 2vw, 24px);
   flex: 1;
   min-width: 0;
   display: flex;
@@ -461,7 +463,7 @@
   width: var(--chat-column-fraction);
   max-width: var(--chat-column-fraction);
   box-sizing: border-box;
-  padding: 40px clamp(12px, 2vw, 24px) 8px;
+  padding: 40px var(--chat-column-padding-inline) 8px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -522,8 +524,8 @@
 
 /* ── Avatar ── */
 .agentAvatar {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   /* background-color: color-mix(in srgb, var(--accent, #93ccff) 22%, white); */
   display: flex;
@@ -930,14 +932,23 @@
   100% { transform: translate(0px,  0px);  }
 }
 
-/* ── Chat input bar ── */
-.chatInputBar {
+/* Same outer width + side padding as .chatMessages — child bar fills content area */
+.chatInputWrap {
   flex-shrink: 0;
   align-self: center;
   width: var(--chat-column-fraction);
   max-width: var(--chat-column-fraction);
   box-sizing: border-box;
+  padding: 0 var(--chat-column-padding-inline);
   margin: 8px 0 16px;
+}
+
+/* ── Chat input bar ── */
+.chatInputBar {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
   background-color: color-mix(in srgb, var(--accent, #a3eeff) 20%, white);
   border-radius: 24px;
   display: flex;
@@ -945,6 +956,8 @@
   padding: 12px 15px 12px 24px;
   min-height: 68px;
   gap: 8px;
+  margin-top: 20px;
+  margin-bottom: 20px;
   transition: box-shadow 0.15s, background-color 0.15s;
 }
 

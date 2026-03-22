@@ -911,13 +911,14 @@ export default function ProjectPage() {
             </div>
           </div>
 
-          {/* Chat input bar */}
-          <div
-            className={`${styles.chatInputBar} ${chatInputDragOver ? styles.chatInputBarDragOver : ''}`}
-            onDrop={handleChatInputDrop}
-            onDragOver={handleChatInputDragOver}
-            onDragLeave={handleChatInputDragLeave}
-          >
+          {/* Chat input — wrapped to match .chatMessages content width (incl. side padding) */}
+          <div className={styles.chatInputWrap}>
+            <div
+              className={`${styles.chatInputBar} ${chatInputDragOver ? styles.chatInputBarDragOver : ''}`}
+              onDrop={handleChatInputDrop}
+              onDragOver={handleChatInputDragOver}
+              onDragLeave={handleChatInputDragLeave}
+            >
             {droppedImage && (
               <div className={styles.imagePreviewRow}>
                 <div className={styles.imagePreviewWrap}>
@@ -960,6 +961,7 @@ export default function ProjectPage() {
                 </svg>
               </button>
             </div>
+          </div>
           </div>
         </main>
       </div>
