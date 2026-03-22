@@ -46,6 +46,7 @@ RULES:
 - No paragraph longer than two sentences without breaking into bullets.
 - Do not open with filler (“Sure!”, “Great question”, “I’d be happy to”).
 - Cut redundancy: no restating the same point in prose and bullets.
+- Do not use horizontal rules: never insert a line containing only `---` (or `***`); in GitHub-flavored Markdown that renders as a divider line. Separate sections with #### headings only.
 - When asking follow-up questions, use one #### section (e.g. #### Open Questions) with bullets—keep the list short.
 """.strip()
 
@@ -64,7 +65,7 @@ The `answer` string must be GitHub-flavored Markdown, concise and scannable:
 2. Primary takeaway — prefer one short sentence or one **bold** lead line under the heading
 3. Supporting detail — bullet lines (`- `); one idea per bullet; ~4 bullets max per section unless asked otherwise
 
-Rules: default to 2–3 #### sections; no paragraph longer than 2 sentences without bullets; no filler openers; avoid repeating the same section title every time.
+Rules: default to 2–3 #### sections; no paragraph longer than 2 sentences without bullets; no filler openers; avoid repeating the same section title every time; no horizontal-rule lines (`---` or `***`)—use #### only.
 
 Populate `references` with key sources (title, url, short note on why it matters). Keep `answer` readable; do not dump raw URLs only in prose.
 """.strip()

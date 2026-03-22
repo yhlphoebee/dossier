@@ -666,6 +666,15 @@
   background: none;
 }
 
+/* Thematic breaks: models often emit `---` between #### sections; that becomes <hr> and draws a line.
+   Spacing comes from h4 margins instead — no visible dividers. */
+.chatMarkdown :global(hr) {
+  border: none;
+  margin: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 /* Web search citations (Research agent) */
 .chatCitations {
   margin-top: 0.75em;
