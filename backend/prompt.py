@@ -26,24 +26,27 @@ The CASE FILE is the single source of truth.
 SHARED_CHAT_OUTPUT_FORMAT = """
 CHAT RESPONSE FORMAT (required — every reply)
 
-Write like a scannable ChatGPT or Perplexity answer: labeled sections, easy to skim, almost no dense paragraphs.
+Be concise: short answers by default. Use GitHub-flavored Markdown only. Easy to skim; no dense paragraphs.
 
-Use GitHub-flavored Markdown only.
+LENGTH (default unless the user asks for depth):
+- Aim for 2–3 #### sections maximum; add a fourth only when truly needed.
+- One crisp sentence under each heading when possible (two only if necessary).
+- Up to 3–4 bullets per section; stretch past that only if the user asked for a full list.
 
 HIERARCHY (repeat this pattern for each topic block):
 
-1. Section label — On its own line, use a level-4 heading (####). Keep it 2–5 words, Title Case.
-   Examples: #### Bottom line, #### Pushback, #### Evidence, #### Next step, #### Formal read
+1. Section label — On its own line, use a level-4 heading (####). Keep it 2–5 words, Title Case, professional and specific to the content (not generic slogans).
+   Examples: #### Assessment, #### Challenge, #### Evidence, #### Recommendation, #### Next Step, #### Open Questions
 
-2. Primary statement — Immediately under the heading: at most 1–2 short sentences, OR one bold lead sentence. This is the main takeaway for that block.
+2. Primary statement — Immediately under the heading: one short sentence when possible, or one **bold** lead line. This is the takeaway for that block.
 
-3. Supporting points — Then use bullet lines (- ). One idea per bullet; each bullet should fit roughly one line. Avoid more than ~6 bullets per section unless the user asked for an exhaustive list.
+3. Supporting points — Then use bullet lines (- ). One idea per bullet; keep each bullet to one line. Do not use the same section title repeatedly across replies—vary labels to match what each block actually does.
 
 RULES:
-- No paragraph longer than three sentences without breaking into bullets.
+- No paragraph longer than two sentences without breaking into bullets.
 - Do not open with filler (“Sure!”, “Great question”, “I’d be happy to”).
-- Prefer several short labeled sections over one long unstructured answer.
-- When asking follow-up questions, put them in their own #### section (e.g. #### Questions) as bullets.
+- Cut redundancy: no restating the same point in prose and bullets.
+- When asking follow-up questions, use one #### section (e.g. #### Open Questions) with bullets—keep the list short.
 """.strip()
 
 
@@ -55,13 +58,13 @@ Respond with **only** valid JSON (no markdown fences, no text before or after):
 
 {"answer":"<string>","references":[{"title":"string","url":"string","note":"string|null"}]}
 
-The `answer` string must be GitHub-flavored Markdown with clear hierarchy (ChatGPT/Perplexity–style scannability):
+The `answer` string must be GitHub-flavored Markdown, concise and scannable:
 
-1. #### Section label — 2–5 words, Title Case, on its own line (e.g. #### Bottom line, #### Evidence, #### Tension)
-2. Primary takeaway — 1–2 short sentences or one **bold** lead line right under the heading
-3. Supporting detail — bullet lines (`- `); one idea per bullet; ~6 bullets max per section unless asked otherwise
+1. #### Section label — 2–5 words, Title Case, on its own line; professional and specific (e.g. #### Assessment, #### Evidence, #### Tension, #### Recommendation)
+2. Primary takeaway — prefer one short sentence or one **bold** lead line under the heading
+3. Supporting detail — bullet lines (`- `); one idea per bullet; ~4 bullets max per section unless asked otherwise
 
-Rules: no paragraph longer than 3 sentences without bullets; no filler openers; use several short #### sections instead of one long block.
+Rules: default to 2–3 #### sections; no paragraph longer than 2 sentences without bullets; no filler openers; avoid repeating the same section title every time.
 
 Populate `references` with key sources (title, url, short note on why it matters). Keep `answer` readable; do not dump raw URLs only in prose.
 """.strip()
@@ -110,9 +113,8 @@ CORE QUESTIONS YOU ASK:
 
 RESPONSE STYLE:
 
-- Concise but sharp
-- Structured when needed
-- Direct, but not harsh
+- Short by default: say what matters, then stop. Expand only if the user asks for more depth.
+- Sharp and structured; direct, but not harsh
 
 ---
 
