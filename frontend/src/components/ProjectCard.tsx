@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Project } from '../pages/HomePage'
+import ProjectCoverMark from './ProjectCoverMark'
+import { coverLogoHasLetters } from '../utils/coverLogo'
 import { getGraphicElement } from '../utils/assets'
 import styles from './ProjectCard.module.css'
 import { EllipsisOutlined, DeleteOutlined, InboxOutlined, UndoOutlined } from '@ant-design/icons'
@@ -29,6 +31,7 @@ function formatRelativeDate(isoString: string): string {
 
 export default function ProjectCard({ project, onClick, onDelete, onArchive, onRestore }: ProjectCardProps) {
   const graphicSrc = getGraphicElement(project.thumbnail_index)
+  const customCover = project.cover_logo && coverLogoHasLetters(project.cover_logo) ? project.cover_logo : null
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -60,11 +63,21 @@ export default function ProjectCard({ project, onClick, onDelete, onArchive, onR
         {/* Full-bleed layer: circle + graphic sized to full thumbnail (Figma: 400/432, 280/432) */}
         <div className={styles.thumbnailFill}>
           <div className={styles.circle} />
-          <img
-            src={graphicSrc}
-            alt={project.title}
-            className={styles.thumbnailImg}
-          />
+          {customCover ? (
+            <div className={`${styles.thumbnailImg} ${styles.thumbnailLogo}`} aria-hidden>
+              <ProjectCoverMark
+                title={customCover.title}
+                gradientT={customCover.gradient_t}
+                layoutSeed={customCover.layout_seed}
+              />
+            </div>
+          ) : (
+            <img
+              src={graphicSrc}
+              alt={project.title}
+              className={styles.thumbnailImg}
+            />
+          )}
         </div>
 
         {/* Top bar markers */}

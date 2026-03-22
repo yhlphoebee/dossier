@@ -4,6 +4,7 @@ import Sidebar, { type FilterCategory } from '../components/Sidebar'
 import ProjectCard from '../components/ProjectCard'
 import DeleteModal from '../components/DeleteModal'
 import VisualExplorationBoard from '../components/VisualExplorationBoard'
+import type { CoverLogoConfig } from '../utils/coverLogo'
 import styles from './HomePage.module.css'
 
 type TabOption = 'My Project' | 'Archived'
@@ -14,6 +15,7 @@ export interface Project {
   updated_at: string   // ISO 8601 datetime string from the API
   archived: boolean
   thumbnail_index: number
+  cover_logo?: CoverLogoConfig | null
 }
 
 const INITIAL_FILTERS: FilterCategory[] = [

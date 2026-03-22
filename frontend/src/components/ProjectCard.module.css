@@ -62,6 +62,13 @@
   transform: rotate(60deg);
 }
 
+.thumbnailLogo {
+  object-fit: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* .thumbnailPlaceholder — reserved when no image */
 
 /* ── Bar markers (decorative vertical bars from Figma) ── */

@@ -1,6 +1,6 @@
 import random
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime
@@ -13,6 +13,14 @@ router = APIRouter()
 THUMBNAIL_COUNT = 4
 
 
+class CoverLogo(BaseModel):
+    """Saved Dossi cover mark (matches frontend ProjectCoverMark / DossiBoardPreview)."""
+
+    title: str = ""
+    gradient_t: float = Field(ge=0, le=1)
+    layout_seed: int = Field(ge=0, le=4_294_967_295)
+
+
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 
 class ProjectOut(BaseModel):
@@ -21,6 +29,7 @@ class ProjectOut(BaseModel):
     description: Optional[str]
     archived: bool
     thumbnail_index: int
+    cover_logo: Optional[CoverLogo] = None
     created_at: datetime
     updated_at: datetime
     strategy_summary: Optional[str]
@@ -51,6 +60,7 @@ class UpdateProjectRequest(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     archived: Optional[bool] = None
+    cover_logo: Optional[CoverLogo] = None  # null in JSON clears; omit = no change
 
 
 class UpdateAgentSummaryRequest(BaseModel):
@@ -98,6 +108,12 @@ def update_project(project_id: str, body: UpdateProjectRequest, db: Session = De
         project.description = body.description
     if body.archived is not None:
         project.archived = body.archived
+    patch = body.model_dump(exclude_unset=True)
+    if "cover_logo" in patch:
+        if patch["cover_logo"] is None:
+            project.cover_logo = None
+        else:
+            project.cover_logo = CoverLogo.model_validate(patch["cover_logo"]).model_dump()
     db.commit()
     db.refresh(project)
     return project

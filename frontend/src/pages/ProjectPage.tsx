@@ -4,6 +4,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import DossiBoard, { DossiBoardHandle } from '../components/DossiBoard'
 import DossiBoardPreview from '../components/DossiBoardPreview'
+import type { CoverLogoConfig } from '../utils/coverLogo'
+import { coverLogoHasLetters, lerpGradientColor, rgbToRgba } from '../utils/coverLogo'
 import StrategistIdle from '../components/StrategistIdle'
 import ResearcherIdle from '../components/ResearcherIdle'
 import styles from './ProjectPage.module.css'
@@ -15,6 +17,7 @@ interface Project {
   updated_at: string
   archived: boolean
   thumbnail_index: number
+  cover_logo?: CoverLogoConfig | null
   strategy_summary?: string
   strategy_problem_statement?: string
   strategy_assumptions?: string
@@ -165,6 +168,10 @@ export default function ProjectPage() {
   const [dossiBoardColor, setDossiBoardColor] = useState('#93ccff')
   const handleDossiBoardColor = useCallback((color: string) => setDossiBoardColor(color), [])
 
+  const handleCoverLogoSaved = useCallback((logo: CoverLogoConfig | null) => {
+    setProject((p) => (p ? { ...p, cover_logo: logo } : null))
+  }, [])
+
   // 'closed' | 'opening' | 'open' | 'closing'
   const [dossiBoardState, setDossiBoardState] = useState<'closed' | 'opening' | 'open' | 'closing'>('closed')
   const [dossiBoardWidth, setDossiBoardWidth] = useState<number | null>(null)
@@ -283,6 +290,12 @@ export default function ProjectPage() {
       .then(async (projectData) => {
         setProject(projectData)
         setTitle(projectData.title === 'Untitled' ? '' : projectData.title)
+        if (projectData.cover_logo && coverLogoHasLetters(projectData.cover_logo)) {
+          const c = lerpGradientColor(projectData.cover_logo.gradient_t)
+          setDossiBoardColor(rgbToRgba(c, 1))
+        } else {
+          setDossiBoardColor('#93ccff')
+        }
 
         // Seed per-agent summaries from project fields
         setSummaryByAgent({
@@ -753,7 +766,14 @@ export default function ProjectPage() {
               </button>
             </div>
             <div className={styles.dossiBoardRight}>
-              <DossiBoardPreview onColorChange={handleDossiBoardColor} />
+              <DossiBoardPreview
+                projectId={id!}
+                initialCoverLogo={
+                  project?.cover_logo && coverLogoHasLetters(project.cover_logo) ? project.cover_logo : null
+                }
+                onColorChange={handleDossiBoardColor}
+                onCoverLogoSaved={handleCoverLogoSaved}
+              />
             </div>
           </div>
           </div>{/* end panelNormal */}
