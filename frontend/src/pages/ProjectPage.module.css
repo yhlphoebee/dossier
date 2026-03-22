@@ -506,8 +506,18 @@
   flex-direction: row-reverse;
 }
 
+/* Extra air before each user turn (after the first message in the thread) */
+.chatMessageRowUser:not(:first-child) {
+  margin-top: 80px;
+}
+
 .chatMessageRowAssistant {
   flex-direction: row;
+}
+
+/* Typing / awaiting reply: vertically center dots with the avatar (row default is flex-end for message bubbles) */
+.chatMessageRowTyping {
+  align-items: center;
 }
 
 /* ── Avatar ── */
@@ -801,14 +811,15 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* Typing indicator — no bubble; aligns like assistant text column */
+/* Typing indicator — dots only; vertically centered beside avatar via .chatMessageRowTyping */
 .chatLoading {
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  padding: 6px 0 12px;
-  align-self: flex-start;
+  padding: 0;
+  min-height: 44px;
   width: fit-content;
   max-width: 100%;
 }

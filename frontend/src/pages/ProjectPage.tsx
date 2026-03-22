@@ -887,7 +887,9 @@ export default function ProjectPage() {
               </div>
             ))}
             {chatLoading && (
-              <div className={`${styles.chatMessageRow} ${styles.chatMessageRowAssistant}`}>
+              <div
+                className={`${styles.chatMessageRow} ${styles.chatMessageRowAssistant} ${styles.chatMessageRowTyping}`}
+              >
                 <div className={styles.agentAvatar}>
                   <svg className={styles.chatLoadingSvg} viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
