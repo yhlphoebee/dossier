@@ -19,7 +19,7 @@
 /* ── Top bar: tabs + new project ── */
 .topBar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
 }
 
@@ -57,10 +57,10 @@
 }
 
 .newProjectBtn {
-  grid-column: 3;
-  justify-self: end;
   font-family: var(--font-display);
   font-size: 20px;
+  line-height: normal;
+  padding: 0;
   color: var(--color-text-inactive);
   background: none;
   border: none;

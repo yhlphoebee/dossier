@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOSSIER — 3D Cube System</title>
+<style>
+  @import url('https://use.typekit.net/placeholder.css');
+  @font-face {
+    font-family: 'Neue Haas Grotesk Display Pro';
+    font-weight: 400;
+    font-style: normal;
+    src: local('NeueHaasDisplayRoman'), local('Neue Haas Grotesk Display Pro 55 Roman'),
+         local('NHaasGroteskDSPro-55Rg'), local('NeueHaasGroteskDisplayPro-55Roman');
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --ink:#111010; --paper:#f4f1ec; --gold:#b89a6a; --dim:#9a9088;
+  }
+
+  html, body { width:100%; height:100%; background:#f4f0ea; overflow:hidden; user-select:none; }
+
+  /* Hide all HUD and controls in sidebar mode */
+  #hud { display:none !important; }
+  /* Disable all pointer events so clicks pass through to the React wrapper */
+  #canvas-wrap { cursor:default !important; pointer-events:none !important; }
+
+  #canvas-wrap { position:absolute; inset:0; cursor:ew-resize; }
+  #canvas-wrap.free-mode { cursor:move; }
+  canvas { display:block; }
+  #overlay { position:absolute; inset:0; pointer-events:none; z-index:0; }
+  #c { position:absolute; inset:0; z-index:1; background:transparent; pointer-events:none; }
+
+  #hud { position:fixed; inset:0; pointer-events:none; }
+
+  #wordmark {
+    position:absolute; top:32px; left:40px;
+    font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:13px; font-weight:300; letter-spacing:0.45em;
+    color:var(--ink); text-transform:uppercase;
+  }
+  #axis-badge {
+    position:absolute; top:58px; left:40px;
+    font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:8.5px; letter-spacing:0.22em;
+    color:var(--gold); text-transform:uppercase; transition:opacity 0.4s;
+  }
+  #meta {
+    position:absolute; top:32px; right:40px;
+    font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:9.5px; letter-spacing:0.2em;
+    color:var(--dim); text-align:right; line-height:2; text-transform:uppercase;
+  }
+  #flat-hint {
+    position:absolute; top:74px; right:40px;
+    font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:8.5px; letter-spacing:0.22em;
+    color:var(--gold); text-align:right; text-transform:uppercase;
+    opacity:0; transition:opacity 0.5s;
+  }
+  #flat-hint.visible { opacity:1; }
+
+  #controls {
+    position:absolute; bottom:32px; left:50%;
+    transform:translateX(-50%);
+    display:flex; align-items:center; gap:0; pointer-events:all;
+  }
+  .sep { width:1px; height:32px; background:var(--ink); opacity:0.18; margin:0 6px; }
+
+  button {
+    font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:9px; letter-spacing:0.3em; text-transform:uppercase;
+    border:1px solid var(--ink); background:transparent; color:var(--ink);
+    padding:9px 18px; cursor:pointer;
+    transition:background 0.15s,color 0.15s,border-color 0.15s,opacity 0.25s;
+    white-space:nowrap;
+  }
+  button+button { border-left:none; }
+  button:hover:not(.dimmed) { background:var(--ink); color:var(--paper); }
+  button.active { background:var(--gold); color:var(--paper); border-color:var(--gold); }
+  button.active:hover { background:var(--ink); border-color:var(--ink); }
+  #btn-dir-cw,#btn-dir-ccw { padding:9px 16px; font-size:13px; letter-spacing:0; }
+  .dimmed { opacity:0.28; pointer-events:none; }
+
+  #level-tag {
+    position:absolute; bottom:32px; right:40px;
+    font-family:'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:9px; letter-spacing:0.18em;
+    color:var(--dim); text-align:right; line-height:2.4; text-transform:uppercase;
+  }
+
+  body::after {
+    content:''; position:fixed; inset:0; pointer-events:none; opacity:0.03;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size:180px 180px;
+  }
+</style>
+</head>
+<body>
+<div id="canvas-wrap"><canvas id="overlay"></canvas><canvas id="c"></canvas></div>
+<div id="hud">
+  <div id="wordmark">Dossier</div>
+  <div id="axis-badge">Y — axis locked</div>
+  <div id="meta">3D Identity System<br><span id="hint">Drag to reveal 3D</span></div>
+  <div id="flat-hint" class="visible">Viewing in 2D</div>
+  <div id="controls">
+    <button id="btn-regen">Regenerate</button>
+    <button id="btn-reset">Reset</button>
+    <div class="sep"></div>
+    <button id="btn-lock" class="active">Axis Lock</button>
+    <div class="sep"></div>
+    <button id="btn-fill" class="active">Fill</button>
+    <div class="sep"></div>
+    <button id="btn-auto">Auto Rotate</button>
+    <button id="btn-dir-ccw" class="dimmed">↺</button>
+    <button id="btn-dir-cw" class="dimmed active">↻</button>
+  </div>
+  <div id="level-tag">
+    Level I &nbsp; D · O<br>
+    Level II &nbsp; S · S · I<br>
+    Level III &nbsp; E · R
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ─────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────
+const CFG = {
+  cols:4, rows:4,
+  letterScale:0.9,       // size of each letter in the middle (increase for bigger DOSSIER)
+  letterTextureScale:0.78, // font size on letter texture (0–1, higher = bolder in texture)
+  levels:[
+    {letters:['D','O'],     y: 1.5},
+    {letters:['S','S','I'], y: 0  },
+    {letters:['E','R'],     y:-1.5},
+  ],
+  spacingX:1.0, spacingZ:1.0,
+  dotR:0.055, autoSpeed:0.004,
+  ink:0x111010, gold:0xb89a6a, bg:0xf4f1ec, cyan:0x7ecfcf, fill:0xb6f5ff,
+  camZ:8.5, revealFrames:70,
+};
+
+// ─────────────────────────────────────
+// RENDERER + TWO CAMERAS
+// ─────────────────────────────────────
+const canvas   = document.getElementById('c');
+const wrap     = document.getElementById('canvas-wrap');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setClearColor(0x000000, 0);
+renderer.autoClear = false;
+
+const overlay    = document.getElementById('overlay');
+const overlayCtx = overlay.getContext('2d');
+function resizeOverlay() {
+  overlay.width  = wrap.clientWidth;
+  overlay.height = wrap.clientHeight;
+}
+resizeOverlay();
+
+const scene    = new THREE.Scene();
+const camPersp = new THREE.PerspectiveCamera(42,1,0.01,200);
+camPersp.position.set(0,0,CFG.camZ); camPersp.lookAt(0,0,0);
+
+const camOrtho = new THREE.OrthographicCamera(-1,1,1,-1,0.01,200);
+camOrtho.position.set(0,0,CFG.camZ); camOrtho.lookAt(0,0,0);
+
+function resize() {
+  const w=wrap.clientWidth, h=wrap.clientHeight;
+  renderer.setSize(w,h);
+  camPersp.aspect=w/h; camPersp.updateProjectionMatrix();
+  const fovRad=camPersp.fov*Math.PI/180;
+  const os=Math.tan(fovRad/2)*CFG.camZ, asp=w/h;
+  camOrtho.left=-os*asp; camOrtho.right=os*asp;
+  camOrtho.top=os; camOrtho.bottom=-os;
+  camOrtho.updateProjectionMatrix();
+  resizeOverlay();
+}
+resize(); window.addEventListener('resize',resize);
+
+// ─────────────────────────────────────
+// STATE
+// ─────────────────────────────────────
+let rotY=0, velX=0;
+const freeQuat=new THREE.Quaternion();
+let freeVelX=0, freeVelY=0;
+let dragging=false, lastX=0, lastY=0;
+let axisLocked=true, autoOn=false, autoDir=1;
+let fillOn=true;
+let flatMode=true, revealT=0, revealing=false;
+
+// ─────────────────────────────────────
+// SCENE GROUPS
+// ─────────────────────────────────────
+const logoGroup  = new THREE.Group();
+scene.add(logoGroup);
+
+let sceneObjects   = [];
+let depthMaterials = [];
+
+let connectorLine = null;
+let connectorFill = null;
+let connLineMat   = null;
+let connFillMat   = null;
+let visibleDotObjects = [];
+
+function clearScene() {
+  while(logoGroup.children.length) {
+    const c=logoGroup.children[0];
+    if(c.geometry) c.geometry.dispose();
+    if(c.material&&!Array.isArray(c.material)) c.material.dispose();
+    logoGroup.remove(c);
+  }
+  sceneObjects=[]; depthMaterials=[];
+  connectorLine=null; connectorFill=null;
+  connLineMat=null; connFillMat=null;
+  visibleDotObjects=[];
+}
+
+// ─────────────────────────────────────
+// GRID HELPERS
+// ─────────────────────────────────────
+function gridXs() {
+  const xs=[],span=(CFG.cols-1)*CFG.spacingX;
+  for(let c=0;c<CFG.cols;c++) xs.push(-span/2+c*CFG.spacingX);
+  return xs;
+}
+function gridZs() {
+  const zs=[],span=(CFG.rows-1)*CFG.spacingZ;
+  for(let r=0;r<CFG.rows;r++) zs.push(-span/2+r*CFG.spacingZ);
+  return zs;
+}
+function shuffle(arr) {
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+// ─────────────────────────────────────
+// LETTER TEXTURES
+// ─────────────────────────────────────
+const letterCache={};
+function getLetterTexture(ch) {
+  if(letterCache[ch]) return letterCache[ch];
+  const sz=256,cnv=document.createElement('canvas');
+  cnv.width=cnv.height=sz;
+  const ctx=cnv.getContext('2d');
+  ctx.clearRect(0,0,sz,sz);
+  ctx.fillStyle='#111010';
+  ctx.font=`${Math.floor(sz*CFG.letterTextureScale)}px 'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(ch,sz/2,sz/2+sz*0.03);
+  letterCache[ch]=new THREE.CanvasTexture(cnv);
+  return letterCache[ch];
+}
+['D','O','S','I','E','R'].forEach(getLetterTexture);
+
+// ─────────────────────────────────────
+// BUILD LOGO
+// ─────────────────────────────────────
+let levelLayouts=[];
+
+function buildLogo() {
+  clearScene();
+  levelLayouts=[];
+  const xs=gridXs(), zs=gridZs();
+
+  CFG.levels.forEach(lvl=>{
+    const colOrder=shuffle([0,1,2,3]);
+    const letterCols=colOrder.slice(0,lvl.letters.length).sort((a,b)=>a-b);
+    const dotCols   =colOrder.slice(lvl.letters.length);
+    const allZRows  =[0,1,2,3];
+
+    const layout={letters:[], dots:[]};
+
+    lvl.letters.forEach((ch,i)=>{
+      const ci=letterCols[i];
+      const ri=allZRows[Math.floor(Math.random()*allZRows.length)];
+      layout.letters.push({ch, x:xs[ci], y:lvl.y, z3D:zs[ri], col:ci, depthOnly:false});
+    });
+
+    dotCols.forEach(ci=>{
+      const ri=allZRows[Math.floor(Math.random()*allZRows.length)];
+      layout.dots.push({x:xs[ci], y:lvl.y, z3D:zs[ri], col:ci, depthOnly:false});
+    });
+
+    const usedCells=new Set([
+      ...layout.letters.map(l=>`${l.col},${allZRows.indexOf(allZRows.find(ri=>zs[ri]===l.z3D))}`),
+      ...layout.dots.map(d=>`${d.col},${allZRows.indexOf(allZRows.find(ri=>zs[ri]===d.z3D))}`),
+    ]);
+    const allCells=[];
+    for(let c=0;c<CFG.cols;c++) for(let r=0;r<CFG.rows;r++) allCells.push([c,r]);
+    const freeCells=shuffle(allCells).filter(([c,r])=>!usedCells.has(`${c},${r}`));
+    freeCells.slice(0,4).forEach(([ci,ri])=>{
+      layout.dots.push({x:xs[ci], y:lvl.y, z3D:zs[ri], col:ci, depthOnly:true});
+    });
+
+    levelLayouts.push(layout);
+  });
+
+  buildSceneObjects();
+}
+
+function buildSceneObjects() {
+  clearScene();
+  const xs=gridXs(), zs=gridZs();
+
+  levelLayouts.forEach(layout=>{
+    const letterCols=new Set(layout.letters.map(l=>l.col));
+
+    // ── LETTERS ──
+    layout.letters.forEach(l=>{
+      const sp=new THREE.Sprite(new THREE.SpriteMaterial({
+        map:getLetterTexture(l.ch), transparent:true, depthWrite:false,
+      }));
+      const flat={x:l.x, y:l.y, z:0};
+      const real={x:l.x, y:l.y, z:l.z3D};
+      sp.position.set(flat.x, flat.y, flat.z);
+      sp.scale.set(CFG.letterScale,CFG.letterScale,1);
+      // FIX: raise letter renderOrder above the connector line (line=1, dots=10, letters=20)
+      sp.renderOrder=20;
+      sp.material.depthTest=false;
+      sp.userData={flat, real};
+      logoGroup.add(sp);
+      sceneObjects.push({obj:sp, flat, real, isDepth:false});
+    });
+
+    // ── DOTS ──
+    layout.dots.forEach(d=>{
+      const colHasLetter=letterCols.has(d.col);
+      const isDepth=d.depthOnly||colHasLetter;
+
+      const mat=new THREE.MeshBasicMaterial({
+        color:CFG.ink, transparent:true, opacity:isDepth?0:1,
+        depthTest:false,  // FIX: disable depth test so renderOrder is respected
+      });
+      const m=new THREE.Mesh(new THREE.SphereGeometry(CFG.dotR,16,16), mat);
+
+      const flat={x:d.x, y:d.y, z:0};
+      const real={x:d.x, y:d.y, z:d.z3D};
+
+      if(isDepth) depthMaterials.push({mat, maxOpacity:1.0, type:'dot'});
+
+      m.position.set(flat.x, flat.y, flat.z);
+      // FIX: renderOrder 10 — above connector line (1) but below letters (20)
+      m.renderOrder=10;
+      m.userData={flat, real};
+      logoGroup.add(m);
+      sceneObjects.push({obj:m, flat, real, isDepth});
+      if(!isDepth) visibleDotObjects.push({obj:m, flat, real});
+    });
+  });
+
+  // ── CONNECTOR LINE ──
+  visibleDotObjects.sort((a,b)=>{
+    const dy=b.flat.y-a.flat.y;
+    if(Math.abs(dy)>0.01) return dy;
+    return a.flat.x-b.flat.x;
+  });
+
+  if(visibleDotObjects.length>=2) {
+    connLineMat=new THREE.LineBasicMaterial({
+      color:CFG.cyan,
+      transparent:true,
+      opacity:1.0,
+      depthTest:false,  // FIX: disable depth test so renderOrder controls layering
+    });
+    const pts=visibleDotObjects.map(d=>new THREE.Vector3(d.obj.position.x, d.obj.position.y, d.obj.position.z));
+    const geo=new THREE.BufferGeometry().setFromPoints(pts);
+    connectorLine=new THREE.Line(geo, connLineMat);
+    // FIX: renderOrder 1 — below dots (10) and letters (20)
+    connectorLine.renderOrder=1;
+    logoGroup.add(connectorLine);
+  }
+
+  // ── FILL MESH ──
+  if(visibleDotObjects.length>=3) {
+    connFillMat=new THREE.MeshBasicMaterial({
+      color:CFG.fill, transparent:true, opacity:0.0,
+      side:THREE.DoubleSide, depthWrite:false, depthTest:false,
+    });
+    connectorFill=new THREE.Mesh(new THREE.BufferGeometry(), connFillMat);
+    // FIX: renderOrder 0 — below everything
+    connectorFill.renderOrder=0;
+    logoGroup.add(connectorFill);
+  }
+
+  buildCage(xs,zs);
+}
+
+// ─────────────────────────────────────
+// 2D CANVAS FILL
+// ─────────────────────────────────────
+function draw2DFill() {
+  overlayCtx.clearRect(0,0,overlay.width,overlay.height);
+  if(!fillOn || !flatMode || revealing) return;
+  if(visibleDotObjects.length < 3) return;
+
+  const w=overlay.width, h=overlay.height;
+  const fovRad = camPersp.fov * Math.PI / 180;
+  const os = Math.tan(fovRad/2) * CFG.camZ;
+  const asp = w/h;
+
+  function project(x, y) {
+    const nx = x / (os * asp);
+    const ny = y / os;
+    return [
+      (nx + 1) * 0.5 * w,
+      (1 - (ny + 1) * 0.5) * h,
+    ];
+  }
+
+  const screenPts = visibleDotObjects.map(d => project(d.flat.x, d.flat.y));
+
+  overlayCtx.beginPath();
+  overlayCtx.moveTo(screenPts[0][0], screenPts[0][1]);
+  for(let i=1;i<screenPts.length;i++) overlayCtx.lineTo(screenPts[i][0], screenPts[i][1]);
+  overlayCtx.closePath();
+  overlayCtx.fillStyle = 'rgba(182, 245, 255, 0.85)';
+  overlayCtx.fill();
+}
+
+// ─────────────────────────────────────
+// CONNECTOR GEOMETRY UPDATE
+// ─────────────────────────────────────
+function updateConnector() {
+  if(!connectorLine && !connectorFill) return;
+
+  const pts = visibleDotObjects.map(d => d.obj.position.clone());
+
+  if(connectorLine && pts.length>=2) {
+    connectorLine.geometry.setFromPoints(pts);
+    connectorLine.geometry.needsUpdate=true;
+  }
+
+  if(connectorFill && pts.length>=3) {
+    const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+    const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+    const cz=pts.reduce((s,p)=>s+p.z,0)/pts.length;
+    const verts=[];
+    for(let i=0;i<pts.length;i++){
+      const next=(i+1)%pts.length;
+      verts.push(cx,cy,cz);
+      verts.push(pts[i].x,pts[i].y,pts[i].z);
+      verts.push(pts[next].x,pts[next].y,pts[next].z);
+    }
+    connectorFill.geometry.setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(verts),3));
+    connectorFill.geometry.computeVertexNormals();
+    connectorFill.geometry.needsUpdate=true;
+  }
+
+  if(connectorLine) connLineMat.opacity = fillOn ? 0.0 : 1.0;
+
+  if(connectorFill) {
+    if(!fillOn) {
+      connFillMat.opacity = 0.0;
+    } else if(flatMode && !revealing) {
+      connFillMat.opacity = 0.0;
+    } else {
+      connFillMat.opacity = 0.5 * revealT;
+    }
+  }
+
+  draw2DFill();
+}
+
+function buildCage(xs,zs) {
+  const ys=CFG.levels.map(l=>l.y);
+  const cageMat =new THREE.LineBasicMaterial({color:CFG.gold,transparent:true,opacity:0});
+  const crossMat=new THREE.LineBasicMaterial({color:CFG.gold,transparent:true,opacity:0});
+  depthMaterials.push({mat:cageMat, maxOpacity:0.22, type:'cage'});
+  depthMaterials.push({mat:crossMat,maxOpacity:0.14, type:'cage'});
+
+  ys.forEach(y=>{
+    zs.forEach(z=>logoGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(xs[0],y,z),new THREE.Vector3(xs[xs.length-1],y,z)
+    ]),cageMat)));
+    xs.forEach(x=>logoGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x,y,zs[0]),new THREE.Vector3(x,y,zs[zs.length-1])
+    ]),cageMat)));
+  });
+  [[xs[0],zs[0]],[xs[0],zs[zs.length-1]],[xs[xs.length-1],zs[0]],[xs[xs.length-1],zs[zs.length-1]]]
+    .forEach(([x,z])=>logoGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(ys.map(y=>new THREE.Vector3(x,y,z))),cageMat)));
+  const s=0.06;
+  ys.forEach(y=>xs.forEach(x=>zs.forEach(z=>{
+    [[new THREE.Vector3(x-s,y,z),new THREE.Vector3(x+s,y,z)],
+     [new THREE.Vector3(x,y,z-s),new THREE.Vector3(x,y,z+s)]
+    ].forEach(pair=>logoGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pair),crossMat)));
+  })));
+}
+
+// ─────────────────────────────────────
+// REVEAL ANIMATION
+// ─────────────────────────────────────
+function triggerReveal() {
+  if(!flatMode) return;
+  flatMode=false; revealing=true;
+  document.getElementById('flat-hint').classList.remove('visible');
+  syncUI();
+}
+
+function applyRevealT(t) {
+  const e=t<0.5?2*t*t:-1+(4-2*t)*t;
+
+  sceneObjects.forEach(({obj,flat,real})=>{
+    obj.position.x=flat.x+(real.x-flat.x)*e;
+    obj.position.y=flat.y+(real.y-flat.y)*e;
+    obj.position.z=flat.z+(real.z-flat.z)*e;
+  });
+
+  depthMaterials.forEach(({mat,maxOpacity})=>{
+    mat.opacity=maxOpacity*e;
+  });
+
+  updateConnector();
+}
+
+// ─────────────────────────────────────
+// INPUT
+// ─────────────────────────────────────
+function onDown(x,y) {
+  dragging=true; lastX=x; lastY=y; velX=0; freeVelX=0; freeVelY=0;
+  triggerReveal();
+}
+function onUp() { dragging=false; }
+function onMove(x,y) {
+  if(!dragging) return;
+  const dx=x-lastX, dy=y-lastY;
+  if(axisLocked){velX=dx*0.008; rotY+=velX;}
+  else{freeVelX=dx*0.008; freeVelY=dy*0.008; applyFreeRotation(freeVelX,freeVelY);}
+  lastX=x; lastY=y;
+}
+function applyFreeRotation(dYaw,dPitch) {
+  const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dYaw);
+  const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dPitch);
+  freeQuat.premultiply(qY).premultiply(qX);
+}
+
+wrap.addEventListener('mousedown', e=>onDown(e.clientX,e.clientY));
+window.addEventListener('mouseup',  onUp);
+window.addEventListener('mousemove', e=>onMove(e.clientX,e.clientY));
+wrap.addEventListener('touchstart', e=>onDown(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+window.addEventListener('touchend',  onUp);
+window.addEventListener('touchmove', e=>onMove(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+
+// ─────────────────────────────────────
+// MODE HELPERS
+// ─────────────────────────────────────
+function syncFreeFromLocked(){freeQuat.setFromAxisAngle(new THREE.Vector3(0,1,0),rotY);}
+function syncLockedFromFree(){rotY=new THREE.Euler().setFromQuaternion(freeQuat,'YXZ').y;}
+
+// ─────────────────────────────────────
+// RESET
+// ─────────────────────────────────────
+function doReset() {
+  rotY=0; velX=0;
+  freeQuat.identity(); freeVelX=0; freeVelY=0;
+  autoOn=false; autoDir=1; axisLocked=true;
+  flatMode=true; revealT=0; revealing=false;
+
+  fillOn=true;
+  document.getElementById('btn-fill').classList.add('active');
+
+  applyRevealT(0);
+  logoGroup.rotation.set(0,0,0);
+  logoGroup.quaternion.identity();
+
+  document.getElementById('flat-hint').classList.add('visible');
+  syncUI();
+}
+
+// ─────────────────────────────────────
+// UI
+// ─────────────────────────────────────
+const btnLock=document.getElementById('btn-lock');
+const btnAuto=document.getElementById('btn-auto');
+const btnCW  =document.getElementById('btn-dir-cw');
+const btnCCW =document.getElementById('btn-dir-ccw');
+const hintEl =document.getElementById('hint');
+const badge  =document.getElementById('axis-badge');
+
+function syncUI() {
+  btnLock.classList.toggle('active',axisLocked);
+  badge.textContent=axisLocked?'Y — axis locked':'Free rotation';
+  wrap.classList.toggle('free-mode',!axisLocked);
+
+  const autoAvail=axisLocked;
+  btnAuto.classList.toggle('dimmed',!autoAvail);
+  if(!autoAvail&&autoOn) autoOn=false;
+  btnAuto.classList.toggle('active',autoOn);
+  btnCW.classList.toggle('dimmed', !autoOn||!autoAvail);
+  btnCCW.classList.toggle('dimmed',!autoOn||!autoAvail);
+  btnCW.classList.toggle('active', autoOn&&autoDir===1);
+  btnCCW.classList.toggle('active',autoOn&&autoDir===-1);
+
+  hintEl.textContent=flatMode
+    ?'Drag to reveal 3D'
+    :!axisLocked
+      ?'Drag freely in any direction'
+      :autoOn
+        ?(autoDir===1?'Auto rotating ↻ — drag to override':'Auto rotating ↺ — drag to override')
+        :'Drag to rotate';
+}
+
+btnLock.addEventListener('click',()=>{
+  if(flatMode) triggerReveal();
+  axisLocked=!axisLocked;
+  if(!axisLocked){syncFreeFromLocked();freeVelX=0;freeVelY=0;}
+  else{syncLockedFromFree();velX=0;}
+  syncUI();
+});
+btnAuto.addEventListener('click',()=>{
+  if(!axisLocked) return;
+  if(flatMode) triggerReveal();
+  autoOn=!autoOn; if(autoOn) velX=0; syncUI();
+});
+btnCW.addEventListener('click',()=>{
+  if(!axisLocked) return;
+  if(flatMode) triggerReveal();
+  if(!autoOn){autoOn=true;velX=0;} autoDir=1; syncUI();
+});
+btnCCW.addEventListener('click',()=>{
+  if(!axisLocked) return;
+  if(flatMode) triggerReveal();
+  if(!autoOn){autoOn=true;velX=0;} autoDir=-1; syncUI();
+});
+
+const btnFill=document.getElementById('btn-fill');
+btnFill.addEventListener('click',()=>{
+  fillOn=!fillOn;
+  btnFill.classList.toggle('active',fillOn);
+  updateConnector();
+});
+
+document.getElementById('btn-regen').addEventListener('click',()=>{ buildLogo(); doReset(); });
+document.getElementById('btn-reset').addEventListener('click', doReset);
+
+// ─────────────────────────────────────
+// RENDER LOOP
+// ─────────────────────────────────────
+function animate() {
+  requestAnimationFrame(animate);
+
+  if(revealing) {
+    revealT=Math.min(1, revealT+1/CFG.revealFrames);
+    applyRevealT(revealT);
+    if(revealT>=1){ revealing=false; revealT=1; }
+  }
+
+  if(!flatMode || revealing) {
+    if(axisLocked) {
+      if(!dragging) {
+        if(autoOn) {
+          if(Math.abs(velX)>CFG.autoSpeed){velX*=0.96;rotY+=velX;}
+          else{velX=0;rotY+=CFG.autoSpeed*autoDir;}
+        } else { velX*=0.92; rotY+=velX; }
+      }
+      logoGroup.rotation.set(0,rotY,0);
+    } else {
+      if(!dragging&&(Math.abs(freeVelX)>0.0001||Math.abs(freeVelY)>0.0001)) {
+        applyFreeRotation(freeVelX,freeVelY);
+        freeVelX*=0.92; freeVelY*=0.92;
+      }
+      logoGroup.quaternion.copy(freeQuat);
+    }
+  }
+
+  updateConnector();
+
+  renderer.clear();
+  renderer.render(scene, flatMode && !revealing ? camOrtho : camPersp);
+}
+
+// ─────────────────────────────────────
+// INIT — sidebar mode: 2D flat, no rotation, fill on
+// ─────────────────────────────────────
+autoOn = false;
+axisLocked = true;
+flatMode = true;
+revealT = 0;
+fillOn = true;
+syncUI();
+buildLogo();
+applyRevealT(0);
+animate();
+</script>
+</body>
+</html>

@@ -59,6 +59,12 @@
   color: var(--color-black);
   padding: 22px 17px 0;
   letter-spacing: -2px;
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 /* ── Divider ── */
@@ -176,10 +182,54 @@
   left: 29px;
 }
 
+/* ── Projects list ── */
+.projectsList {
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0 24px;
+  padding: 10px 8px 10px 0;
+}
+
+.projectItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  padding: 8px 0;
+  margin-bottom: 2px;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.projectItemText {
+  flex: 1;
+  text-align: left;
+}
+
+.projectItemArrow {
+  flex-shrink: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--color-text-primary);
+  opacity: 0.5;
+  transform: translateX(0);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.projectItem:hover .projectItemArrow {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
 /* ── Footer ── */
 .footer {
   display: flex;
-  height: 109px;
+  height: 160px;
   flex-shrink: 0;
 }
 
@@ -217,27 +267,43 @@
   font-weight: 400;
 }
 
-.footerAccent {
-  width: 111px;
-  background-color: var(--color-accent-cyan);
-  flex-shrink: 0;
-}
-
-/* Cyan square that also acts as the collapse button */
-.footerAccentBtn {
-  width: 111px;
-  background-color: var(--color-accent-cyan);
+.footerLogoBtn {
+  width: 160px;
   flex-shrink: 0;
   border: none;
+  padding: 0;
   cursor: pointer;
-  color: var(--color-white);
+  background: #f4f0ea;
+  /* matches logo HTML background so no flash on load */
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.footerLogoBtn:hover {
+  opacity: 0.88;
+}
+
+.footerLogoFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  pointer-events: none;
+}
+
+.collapseOverlay {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  transition: background-color 0.15s;
+  background: rgba(141, 234, 255, 0.7);
+  color: var(--color-black);
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
-.footerAccentBtn:hover {
-  background-color: #6fd8ef;
+.footerLogoBtn:hover .collapseOverlay {
+  opacity: 1;
 }

@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { getGraphicElement } from '../utils/assets'
-import DossiBoard from '../components/DossiBoard'
+import DossiBoard, { DossiBoardHandle } from '../components/DossiBoard'
+import DossiBoardPreview from '../components/DossiBoardPreview'
+import StrategistIdle from '../components/StrategistIdle'
+import ResearcherIdle from '../components/ResearcherIdle'
 import styles from './ProjectPage.module.css'
 
 interface Project {
@@ -81,9 +83,59 @@ const TABS = ['Strategist', 'Researcher', 'Director', 'Presenter'] as const
 const TAB_KEYS: AgentKey[] = ['strategy', 'research', 'concept', 'present']
 const CLARITY_DOTS = 8
 
+interface AgentConfig {
+  clarityLabel: string
+  summaryLabel: string
+  summaryPlaceholder: string
+  field2Label: string
+  field2Placeholder: string
+  field3Label: string
+  field3Placeholder: string
+}
+
+const AGENT_CONFIG: Record<AgentKey, AgentConfig> = {
+  strategy: {
+    clarityLabel: 'Strategic Clarity',
+    summaryLabel: 'Core Hypothesis',
+    summaryPlaceholder: 'What is the core hypothesis driving this strategy?',
+    field2Label: 'Problem',
+    field2Placeholder: 'What problem does this project address?',
+    field3Label: 'Assumptions',
+    field3Placeholder: 'List the key assumptions for this strategy…',
+  },
+  research: {
+    clarityLabel: 'Evidence Strength',
+    summaryLabel: 'Key Insight',
+    summaryPlaceholder: 'What is the key insight from your research?',
+    field2Label: 'References',
+    field2Placeholder: 'List key references and sources…',
+    field3Label: 'Gaps',
+    field3Placeholder: 'What gaps remain in the research?',
+  },
+  concept: {
+    clarityLabel: 'System Coherence',
+    summaryLabel: 'Core Visual Rule',
+    summaryPlaceholder: 'Elements connect through directional flow to represent pairing',
+    field2Label: 'Key Moves',
+    field2Placeholder: 'What are the key design moves?',
+    field3Label: 'Risks',
+    field3Placeholder: 'What are the risks in this direction?',
+  },
+  present: {
+    clarityLabel: 'Narrative Clarity',
+    summaryLabel: 'Core Thesis',
+    summaryPlaceholder: '1 sentence',
+    field2Label: '3 Arguments',
+    field2Placeholder: 'List the 3 main arguments…',
+    field3Label: 'Weak Points',
+    field3Placeholder: 'What are the weak points in this narrative?',
+  },
+}
+
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [project, setProject] = useState<Project | null>(null)
   const [title, setTitle] = useState('')
@@ -109,13 +161,16 @@ export default function ProjectPage() {
     concept: '',
     present: '',
   })
-  const [problemOpen, setProblemOpen] = useState(false)
-  const [assumptionsOpen, setAssumptionsOpen] = useState(false)
+  // Color picked from the gradient bar in DossiBoardPreview
+  const [dossiBoardColor, setDossiBoardColor] = useState('#93ccff')
+  const handleDossiBoardColor = useCallback((color: string) => setDossiBoardColor(color), [])
+
   // 'closed' | 'opening' | 'open' | 'closing'
   const [dossiBoardState, setDossiBoardState] = useState<'closed' | 'opening' | 'open' | 'closing'>('closed')
   const [dossiBoardWidth, setDossiBoardWidth] = useState<number | null>(null)
   const [isResizing, setIsResizing] = useState(false)
   const bodyRef = useRef<HTMLDivElement>(null)
+  const dossiBoardRef = useRef<DossiBoardHandle>(null)
 
   const openDossiBoard = () => {
     setDossiBoardState('opening')
@@ -143,8 +198,8 @@ export default function ProjectPage() {
     const onMouseMove = (ev: MouseEvent) => {
       const bodyWidth = bodyRef.current?.offsetWidth ?? window.innerWidth
       const newWidth = Math.min(
-        Math.max(startWidth + (ev.clientX - startX), 600),
-        bodyWidth - 600,
+        Math.max(startWidth + (ev.clientX - startX), 720),
+        bodyWidth - 550,
       )
       setDossiBoardWidth(newWidth)
     }
@@ -289,6 +344,14 @@ export default function ProjectPage() {
       })
       .catch(() => navigate('/'))
   }, [id, navigate])
+
+  // Open Dossi Board when navigating from sidebar "Visual Exploration" project list
+  useEffect(() => {
+    if (!id || (location.state as { openDossiBoard?: boolean } | null)?.openDossiBoard !== true) return
+    setDossiBoardState('opening')
+    requestAnimationFrame(() => requestAnimationFrame(() => setDossiBoardState('open')))
+    navigate(location.pathname, { replace: true, state: {} })
+  }, [id, location.state, location.pathname, navigate])
 
   // Scroll chat to bottom on new message
   useEffect(() => {
@@ -546,7 +609,6 @@ export default function ProjectPage() {
     }
   }
 
-  const displayTitle = title.trim() || 'Untitled'
   const currentAgent: AgentKey = TAB_KEYS[activeTab]
   const messages = messagesByAgent[currentAgent]
 
@@ -554,7 +616,7 @@ export default function ProjectPage() {
     <div className={styles.layout}>
       {/* Top bar */}
       <header className={styles.header}>
-        <button className={styles.logoLink} onClick={() => navigate('/')}>
+        <button className={styles.logoLink} onClick={() => navigate('/home')}>
           DOSSIER
         </button>
         <input
@@ -569,7 +631,7 @@ export default function ProjectPage() {
 
       <div className={styles.divider} />
 
-      <div className={styles.body} ref={bodyRef}>
+      <div className={styles.body} ref={bodyRef} style={{ '--accent': dossiBoardColor } as React.CSSProperties}>
         {/* ── Left panel ── */}
         <aside
           className={`${styles.leftPanel} ${dossiBoardExpanded ? styles.leftPanelExpanded : ''} ${dossiBoardState === 'open' ? styles.leftPanelOpen : ''} ${isResizing ? styles.leftPanelResizing : ''}`}
@@ -615,14 +677,15 @@ export default function ProjectPage() {
 
             <div className={styles.cardDivider} />
 
-            {/* Strategic Clarity row */}
+            {/* Clarity row — label changes per agent */}
             <div className={styles.clarityRow}>
-              <span className={styles.clarityLabel}>Strategic Clarity</span>
-              <div className={styles.clarityDots}>
+              <span className={styles.clarityLabel}>{AGENT_CONFIG[currentAgent].clarityLabel}</span>
+              <div className={`${styles.clarityDots} ${saving ? styles.clarityDotsLoading : ''}`}>
                 {Array.from({ length: CLARITY_DOTS }).map((_, i) => (
                   <span
                     key={i}
-                    className={`${styles.clarityDot} ${i < clarityLevel ? styles.clarityDotActive : ''}`}
+                    className={`${styles.clarityDot} ${!saving && i < clarityLevel ? styles.clarityDotActive : ''}`}
+                    style={saving ? { animationDelay: `${i * 0.1}s` } : undefined}
                   />
                 ))}
               </div>
@@ -630,69 +693,47 @@ export default function ProjectPage() {
 
             <div className={styles.cardDivider} />
 
-            {/* Key statement block */}
-            <div className={styles.statementBlock}>
+            {/* Summary / core statement block */}
+            <div className={styles.sectionBlock}>
+              <span className={styles.sectionLabel}>{AGENT_CONFIG[currentAgent].summaryLabel}</span>
+              {currentAgent === 'concept' && (
+                <span className={styles.sectionHint}>→ "Elements connect through directional flow to represent pairing"</span>
+              )}
+              {currentAgent === 'present' && (
+                <span className={styles.sectionHint}>→ (1 sentence)</span>
+              )}
               <textarea
                 className={styles.statementInput}
-                placeholder="Enter your key strategic statement here…"
+                placeholder={AGENT_CONFIG[currentAgent].summaryPlaceholder}
                 value={localSummary}
                 onChange={(e) => setLocalSummary(e.target.value)}
-                rows={3}
               />
             </div>
 
             <div className={styles.cardDivider} />
 
-            {/* Accordion: Problem Statement */}
-            <div className={styles.accordionRow}>
-              <button
-                className={styles.accordionHeader}
-                onClick={() => setProblemOpen((v) => !v)}
-              >
-                <span className={styles.accordionLabel}>Problem Statement</span>
-                <svg
-                  className={`${styles.chevron} ${problemOpen ? styles.chevronOpen : ''}`}
-                  width="12" height="8" viewBox="0 0 12 8" fill="none"
-                >
-                  <path d="M1 1L6 6L11 1" stroke="#999" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-              {problemOpen && (
-                <textarea
-                  className={styles.accordionTextarea}
-                  placeholder="Describe the problem this project addresses…"
-                  value={localProblem}
-                  onChange={(e) => setLocalProblem(e.target.value)}
-                  rows={4}
-                />
-              )}
+            {/* Field 2 — always open */}
+            <div className={styles.sectionBlock}>
+              <span className={styles.sectionLabel}>{AGENT_CONFIG[currentAgent].field2Label}</span>
+              <textarea
+                className={styles.sectionTextarea}
+                placeholder={AGENT_CONFIG[currentAgent].field2Placeholder}
+                value={localProblem}
+                onChange={(e) => setLocalProblem(e.target.value)}
+              />
             </div>
 
             <div className={styles.cardDivider} />
 
-            {/* Accordion: Assumptions */}
-            <div className={styles.accordionRow}>
-              <button
-                className={styles.accordionHeader}
-                onClick={() => setAssumptionsOpen((v) => !v)}
-              >
-                <span className={styles.accordionLabel}>Assumptions</span>
-                <svg
-                  className={`${styles.chevron} ${assumptionsOpen ? styles.chevronOpen : ''}`}
-                  width="12" height="8" viewBox="0 0 12 8" fill="none"
-                >
-                  <path d="M1 1L6 6L11 1" stroke="#999" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-              {assumptionsOpen && (
-                <textarea
-                  className={styles.accordionTextarea}
-                  placeholder="List the key assumptions for this project…"
-                  value={localAssumptions}
-                  onChange={(e) => setLocalAssumptions(e.target.value)}
-                  rows={4}
-                />
-              )}
+            {/* Field 3 — always open */}
+            <div className={styles.sectionBlock}>
+              <span className={styles.sectionLabel}>{AGENT_CONFIG[currentAgent].field3Label}</span>
+              <textarea
+                className={styles.sectionTextarea}
+                placeholder={AGENT_CONFIG[currentAgent].field3Placeholder}
+                value={localAssumptions}
+                onChange={(e) => setLocalAssumptions(e.target.value)}
+              />
             </div>
           </div>
 
@@ -712,13 +753,7 @@ export default function ProjectPage() {
               </button>
             </div>
             <div className={styles.dossiBoardRight}>
-              {project && (
-                <img
-                  src={getGraphicElement(project.thumbnail_index)}
-                  alt="Project graphic"
-                  className={styles.dossiBoardImg}
-                />
-              )}
+              <DossiBoardPreview onColorChange={handleDossiBoardColor} />
             </div>
           </div>
           </div>{/* end panelNormal */}
@@ -726,7 +761,13 @@ export default function ProjectPage() {
           {/* Dossi Board overlay — stays mounted during closing so it can animate out */}
           {dossiBoardMounted && (
             <div className={`${styles.dossiBoardExpanded} ${dossiBoardVisible ? styles.dossiBoardExpandedVisible : ''}`}>
-              <DossiBoard projectId={id!} onCollapse={closeDossiBoard} />
+              <DossiBoard
+                ref={dossiBoardRef}
+                projectId={id!}
+                onCollapse={closeDossiBoard}
+                activeAgent={currentAgent}
+                onAgentChange={(agent) => setActiveTab(TAB_KEYS.indexOf(agent))}
+              />
             </div>
           )}
 
@@ -744,66 +785,85 @@ export default function ProjectPage() {
         <main className={styles.chatPanel}>
           <div className={styles.chatMessages}>
             {messages.length === 0 && (
-              <p className={styles.chatPrompt}>
-                Start by telling me what you're trying to design, even if it's unclear!
-              </p>
+              <div className={styles.chatEmptyState}>
+                {currentAgent === 'strategy' && <StrategistIdle />}
+                {currentAgent === 'research' && <ResearcherIdle />}
+              </div>
             )}
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`${styles.chatMessageGroup} ${msg.role === 'user' ? styles.chatMessageGroupUser : styles.chatMessageGroupAssistant}`}
+                className={`${styles.chatMessageRow} ${msg.role === 'user' ? styles.chatMessageRowUser : styles.chatMessageRowAssistant}`}
               >
-                {msg.role === 'user' && msg.image_src && (
-                  <img src={msg.image_src} alt="attached" className={styles.chatBubbleImage} />
-                )}
-                {(msg.role === 'assistant' || msg.content) && (
-                  <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant}`}>
-                    {msg.role === 'assistant' ? (
-                      <>
-                        <div className={styles.chatMarkdown}>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.bodyContent ?? msg.content}</ReactMarkdown>
-                        </div>
-                        {(msg.web_search_used || (msg.citations && msg.citations.length > 0)) && (
-                          <div className={styles.chatCitations}>
-                            {msg.web_search_used && (
-                              <span className={styles.chatSearchBadge} title="This reply used web search">Searched the web</span>
-                            )}
-                            {msg.citations && msg.citations.length > 0 && (
-                              <>
-                                <span className={styles.chatCitationsLabel}>References</span>
-                                <ul className={styles.chatCitationsList}>
-                                  {msg.citations.map((c, j) => (
-                                    <li key={j} className={styles.chatCitationItem}>
-                                      <a href={c.url} target="_blank" rel="noopener noreferrer" className={styles.chatCitationLink}>
-                                        {c.title || c.url}
-                                      </a>
-                                      <AddToBoardButton
-                                        url={c.url}
-                                        title={c.title}
-                                        projectId={id!}
-                                        isSaved={savedBoardUrls.has(c.url)}
-                                        onSaved={(url) => setSavedBoardUrls((prev) => new Set([...prev, url]))}
-                                      />
-                                    </li>
-                                  ))}
-                                </ul>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      msg.content
-                    )}
+                {/* Avatar — left of bubble, only on last message of each assistant run, pinned to bottom */}
+                {msg.role === 'assistant' && (
+                  <div className={`${styles.agentAvatar} ${(i === messages.length - 1 || messages[i + 1]?.role !== 'assistant') ? '' : styles.agentAvatarHidden}`}>
+                    <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
+                      <path fill="none" d="M476.24,215.84c25.14-23.32,60.06-32.6,93.4-24.82,32.53,7.58,59.46,30.62,72.04,61.62" stroke="#111" strokeWidth="33" strokeLinecap="round"/>
+                      <line x1="752.84" y1="230" x2="914.09" y2="135" stroke="#111" strokeWidth="33" strokeLinecap="round"/>
+                      <circle fill="#111" cx="651.01" cy="351.83" r="46.59"/>
+                      <circle fill="#111" cx="803.71" cy="351.13" r="46.59"/>
+                      <path fill="#111" d="M846.08,623.11h-109.75c-9.1,0-16.48-7.38-16.48-16.48s7.38-16.48,16.48-16.48h109.75c9.1,0,16.48,7.38,16.48,16.48s-7.38,16.48-16.48,16.48Z"/>
+                    </svg>
                   </div>
                 )}
+                <div className={`${styles.chatMessageGroup} ${msg.role === 'user' ? styles.chatMessageGroupUser : styles.chatMessageGroupAssistant}`}>
+                  {msg.role === 'user' && msg.image_src && (
+                    <img src={msg.image_src} alt="attached" className={styles.chatBubbleImage} />
+                  )}
+                  {(msg.role === 'assistant' || msg.content) && (
+                    <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAssistant}`}>
+                      {msg.role === 'assistant' ? (
+                        <>
+                          <div className={styles.chatMarkdown}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.bodyContent ?? msg.content}</ReactMarkdown>
+                          </div>
+                          {msg.citations && msg.citations.length > 0 && (
+                            <div className={styles.chatCitations}>
+                              <ul className={styles.chatCitationsList}>
+                                {msg.citations.map((c, j) => (
+                                  <li key={j} className={styles.chatCitationItem}>
+                                    <a href={c.url} target="_blank" rel="noopener noreferrer" className={styles.chatCitationLink}>
+                                      {c.title || c.url}
+                                    </a>
+                                    <AddToBoardButton
+                                      url={c.url}
+                                      title={c.title}
+                                      projectId={id!}
+                                      isSaved={savedBoardUrls.has(c.url)}
+                                      onSaved={(url) => {
+                                        setSavedBoardUrls((prev) => new Set([...prev, url]))
+                                        dossiBoardRef.current?.switchToWebsites()
+                                      }}
+                                    />
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        msg.content
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
             {chatLoading && (
               <div className={`${styles.chatBubble} ${styles.chatBubbleAssistant} ${styles.chatLoading}`}>
-                <span />
-                <span />
-                <span />
+                <svg className={styles.chatLoadingSvg} viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
+                  <path className={styles.loadingBrowArc} fill="none" d="M476.24,215.84c25.14-23.32,60.06-32.6,93.4-24.82,32.53,7.58,59.46,30.62,72.04,61.62" stroke="#111" strokeWidth="33" strokeLinecap="round" style={{ transformOrigin: '575px 225px' }}/>
+                  <line className={styles.loadingBrowTick} x1="752.84" y1="230" x2="914.09" y2="135" stroke="#111" strokeWidth="33" strokeLinecap="round" style={{ transformOrigin: '833px 183px' }}/>
+                  <g className={styles.loadingEyeLeft}><circle fill="#111" cx="651.01" cy="351.83" r="46.59"/></g>
+                  <g className={styles.loadingEyeRight}><circle fill="#111" cx="803.71" cy="351.13" r="46.59"/></g>
+                  <path fill="#111" d="M846.08,623.11h-109.75c-9.1,0-16.48-7.38-16.48-16.48s7.38-16.48,16.48-16.48h109.75c9.1,0,16.48,7.38,16.48,16.48s-7.38,16.48-16.48,16.48Z"/>
+                </svg>
+                <div className={styles.chatLoadingDots}>
+                  <span /><span /><span />
+                </div>
               </div>
             )}
             <div ref={chatEndRef} />

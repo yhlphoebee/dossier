@@ -137,6 +137,7 @@ export default function HomePage() {
         onSearchChange={setSearchQuery}
         filters={filters}
         onToggleFilter={toggleFilter}
+        projects={filteredProjects}
         collapsible={visualExplorationOn}
       />
 

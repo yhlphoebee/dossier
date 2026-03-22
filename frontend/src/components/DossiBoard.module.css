@@ -21,23 +21,24 @@
   align-items: baseline;
   gap: 0;
   padding: 18px 24px;
-  background-color: #f5fcfe;
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 20%, white);
   border: none;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.15s;
+  transition: background-color 0.3s;
   white-space: nowrap;
   overflow: hidden;
 }
 
 .tabActive {
-  background-color: #c0f3ff;
+  background-color: var(--accent, #a3eeff);
+  transition: background-color 0.3s;
 }
 
 .tabLabel {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 400;
+  font-weight: 00;
   color: #111;
 }
 
@@ -47,6 +48,11 @@
   font-weight: 400;
   color: #b3b2b2;
   margin-left: 0.4em;
+  transition: color 0.3s;
+}
+
+.tabActive .tabCountNum {
+  color: #111;
 }
 
 /* ── Content / drop zone ── */
@@ -60,8 +66,8 @@
 }
 
 .contentDragOver {
-  background-color: #edfbff;
-  outline: 2px dashed #8deaff;
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 20%, white);
+  outline: 2px dashed var(--accent, #8deaff);
   outline-offset: -8px;
 }
 
@@ -164,18 +170,18 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: var(--color-accent-cyan);
+  background-color: var(--accent, var(--color-accent-cyan));
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s, transform 0.1s;
+  transition: background-color 0.3s, transform 0.1s;
   z-index: 1;
 }
 
 .deleteBtn:hover {
-  background-color: #6fd8ef;
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 80%, black);
   transform: scale(1.08);
 }
 
@@ -261,8 +267,8 @@
 }
 
 .addTile:hover {
-  border-color: #8deaff;
-  background-color: #f5fdff;
+  border-color: var(--accent, #8deaff);
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 20%, white);
 }
 
 /* ── Uploading overlay ── */
@@ -292,33 +298,82 @@
   display: flex;
   align-items: stretch;
   flex-shrink: 0;
-  height: 92px;
+  height: 72px;
 }
 
 .bottomLeft {
   width: 222px;
-  background-color: #a3eeff;
+  background-color: var(--accent, #a3eeff);
   display: flex;
-  align-items: flex-start;
-  padding: 20px 24px;
+  align-items: center;
+  padding: 0 24px;
   flex-shrink: 0;
+  transition: background-color 0.3s;
+}
+
+.bottomAgents {
+  flex: 1;
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 20%, white);
+  display: flex;
+  align-items: stretch;
+  padding: 0 8px;
+  gap: 0;
+  transition: background-color 0.3s;
+}
+
+.agentTab {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 16px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  color: #b0b0b0;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.agentTab:hover {
+  color: #666;
+}
+
+.agentTabActive {
+  color: #111;
+  font-weight: 500;
+}
+
+.agentTabActive::after {
+  content: '';
+  position: absolute;
+  bottom: 14px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background-color: var(--accent, #7ecfea);
+  border-radius: 2px 2px 0 0;
+  transition: background-color 0.3s;
 }
 
 .bottomRight {
-  flex: 1;
-  background-color: #effcff;
+  width: 80px;
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 20%, white);
   display: flex;
   align-items: center;
   justify-content: flex-end;
   padding-right: 24px;
+  flex-shrink: 0;
+  transition: background-color 0.3s;
 }
 
 .bottomTitle {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 400;
   color: var(--color-black);
-  line-height: 0.97;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .collapseBtn {
@@ -329,8 +384,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--accent, #45DAF1);
   opacity: 0.7;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, color 0.3s;
 }
 
 .collapseBtn:hover {

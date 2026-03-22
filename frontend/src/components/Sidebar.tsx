@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './Sidebar.module.css'
+import { Project } from '../pages/HomePage'
 
 function ChevronDoubleLeft() {
   return (
@@ -33,12 +35,14 @@ interface SidebarProps {
   onSearchChange: (value: string) => void
   filters: FilterCategory[]
   onToggleFilter: (index: number) => void
+  projects: Project[]
   collapsible?: boolean
 }
 
-export default function Sidebar({ searchQuery, onSearchChange, filters, onToggleFilter, collapsible = false }: SidebarProps) {
+export default function Sidebar({ searchQuery, onSearchChange, filters, onToggleFilter, projects, collapsible = false }: SidebarProps) {
   const [activeSort, setActiveSort] = useState<SortOption>('Relevant')
   const [collapsed, setCollapsed] = useState(false)
+  const navigate = useNavigate()
 
   if (collapsible && collapsed) {
     return (
@@ -59,7 +63,9 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
     <aside className={styles.sidebar}>
       <div className={styles.top}>
         {/* Logo */}
-        <h1 className={styles.logo}>DOSSIER</h1>
+        <button type="button" className={styles.logo} onClick={() => navigate('/home')}>
+          DOSSIER
+        </button>
 
         <div className={styles.divider} />
 
@@ -107,6 +113,20 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
                   <span className={styles.toggleThumb} />
                 </button>
               </div>
+              {filter.label === 'Visual Exploration' && filter.enabled && (
+                <div className={styles.projectsList}>
+                  {projects.map((project) => (
+                    <button
+                      key={project.id}
+                      className={styles.projectItem}
+                      onClick={() => navigate(`/project/${project.id}`, { state: { openDossiBoard: true } })}
+                    >
+                      <span className={styles.projectItemText}>{project.title}</span>
+                      <span className={styles.projectItemArrow} aria-hidden="true">→</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className={styles.divider} />
             </div>
           ))}
@@ -121,17 +141,24 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
           </div>
           <span className={styles.userName}>Lauren Chen</span>
         </div>
-        {collapsible ? (
-          <button
-            className={styles.footerAccentBtn}
-            onClick={() => setCollapsed(true)}
-            aria-label="Collapse sidebar"
-          >
-            <ChevronDoubleLeft />
-          </button>
-        ) : (
-          <div className={styles.footerAccent} />
-        )}
+        <button
+          className={styles.footerLogoBtn}
+          onClick={() => navigate('/logo')}
+          aria-label="Open interactive logo"
+        >
+          <iframe
+            src="/dossier_logo_sidebar.html"
+            title="Dossier Logo"
+            className={styles.footerLogoFrame}
+            scrolling="no"
+            tabIndex={-1}
+          />
+          {collapsible && (
+            <div className={styles.collapseOverlay} onClick={(e) => { e.stopPropagation(); setCollapsed(true); }}>
+              <ChevronDoubleLeft />
+            </div>
+          )}
+        </button>
       </div>
     </aside>
   )

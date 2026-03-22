@@ -1,0 +1,224 @@
+.page {
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(-45deg, #c9bfb2, #f4f0ea, #e8e0d5, #f4f0ea, #c9bfb2);
+  background-size: 300% 300%;
+  animation: gradientMove 8s ease infinite;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-display);
+}
+
+
+/* ── NAV ── */
+.nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 115px;
+  display: flex;
+  align-items: center;
+  padding: 0 40px 0 calc(50% - 682px);
+  z-index: 10;
+}
+
+.wordmark {
+  font-size: 35px;
+  font-weight: 400;
+  color: #000;
+  letter-spacing: 0;
+  flex: 1;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.navLinkOutline {
+  font-size: 16px;
+  font-weight: 400;
+  color: #000;
+  padding: 0 30px;
+  height: 40px;
+  border: 1px solid #000;
+  border-radius: 196px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-right: 5px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.navLinkOutline:last-of-type {
+  margin-right: 0;
+}
+
+.navLinkFilled {
+  font-size: 16px;
+  font-weight: 400;
+  color: #fff;
+  padding: 0 30px;
+  height: 40px;
+  background-color: #8deaff;
+  border-radius: 196px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  border: none;
+  margin-left: 5px;
+}
+
+/* ── HERO TEXT ── */
+.heroText {
+  position: absolute;
+  top: 260px;
+  left: calc(50% - 682px);
+  z-index: 10;
+}
+
+.heroLine1 {
+  font-size: 58px;
+  font-weight: 450;
+  color: #000;
+  line-height: 1.01;
+  width: 503px;
+  white-space: pre-wrap;
+}
+
+.heroLine2Wrap {
+  margin-top: 42px;
+  overflow: hidden;
+  height: 72px;
+}
+
+.heroLine2 {
+  font-size: 58px;
+  font-weight: 400;
+  color: #000;
+  line-height: 1.01;
+  display: block;
+  transform-origin: top center;
+}
+
+.heroLine2Out {
+  animation: fadeSlideOut 0.5s ease-in forwards;
+}
+
+.heroLine2In {
+  animation: fadeSlideIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeSlideOut {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-14px);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeSlideIn {
+  0% {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── DIVIDER LINE (inside hero so it sits below text, no fixed top overlap) ── */
+.dividerWrap {
+  margin-top: 0px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.dividerLine {
+  height: 6px;
+  width: 421px;
+  background-color: #8deaff;
+  border-radius: 17px;
+  position: relative;
+  transform-origin: left center;
+}
+
+.dividerLineSweep {
+  animation: dividerLineSweep 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes dividerLineSweep {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+.dividerDot {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  background-color: #8deaff;
+  border-radius: 50%;
+}
+
+/* Before first phrase change: dot sits at the right end of the bar */
+.dividerDotRest {
+  /* 421px bar width, dot is 17px wide, overhang 8px → center at 421 - 8 = 413px */
+  left: 413px;
+}
+
+/* Each new phrase: dot travels left → right */
+.dividerDotSweep {
+  animation: dividerDotSweep 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes dividerDotSweep {
+  0% {
+    left: -8px;
+  }
+  100% {
+    left: 413px;
+  }
+}
+
+/* ── LOGO IFRAME ── */
+.logoWrap {
+  position: absolute;
+  left: calc(50% + 315px);
+  transform: translateX(-50%);
+  top: 100px;
+  width: 720px;
+  height: 720px;
+  z-index: 5;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+}
+
+.logoFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+}
+
+@keyframes gradientMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
