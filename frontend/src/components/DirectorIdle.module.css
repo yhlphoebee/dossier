@@ -1,12 +1,10 @@
 .root {
   animation: fadeIn 0.6s ease both;
   width: 100%;
-  /* Compact hero; slightly larger than previous pass, still smaller than first 720px */
   max-width: min(365px, 88vw);
   margin: 0 auto;
 }
 
-/* Typing row: character-only crop, no hero fade or max-width */
 .rootLoading {
   animation: none;
   max-width: none;
@@ -49,7 +47,7 @@
 
 .characterGroup {
   transform-box: view-box;
-  transform-origin: 32% 46%;
+  transform-origin: 38% 46%;
   animation: floatChar 4s ease-in-out infinite;
 }
 
@@ -63,47 +61,48 @@
   }
 }
 
+/* Filled brows from asset — subtle tilt; origins near medial root of each brow */
 .browLeft {
   transform-box: view-box;
-  transform-origin: 780px 448px;
-  animation: browLeftTilt 3.6s ease-in-out infinite;
+  transform-origin: 872px 384px;
+  animation: browLeftNudge 3.6s ease-in-out infinite;
 }
 
 .browRight {
   transform-box: view-box;
-  transform-origin: 900px 400px;
-  animation: browRightTilt 3.4s ease-in-out infinite;
+  transform-origin: 928px 392px;
+  animation: browRightNudge 3.4s ease-in-out infinite;
 }
 
-@keyframes browLeftTilt {
+@keyframes browLeftNudge {
   0%,
   100% {
     transform: rotate(0deg);
   }
   45% {
-    transform: rotate(-6.5deg);
+    transform: rotate(-4deg);
   }
   70% {
-    transform: rotate(-2deg);
+    transform: rotate(-1.2deg);
   }
 }
 
-@keyframes browRightTilt {
+@keyframes browRightNudge {
   0%,
   100% {
     transform: rotate(0deg);
   }
   40% {
-    transform: rotate(8deg);
+    transform: rotate(5deg);
   }
   65% {
-    transform: rotate(3.5deg);
+    transform: rotate(2deg);
   }
 }
 
 .eyeLeft {
   transform-box: view-box;
-  transform-origin: 794.71px 510.74px;
+  transform-origin: 826.73px 437.66px;
   animation: eyeLeftGlance 3.2s ease-in-out infinite;
 }
 
@@ -122,7 +121,7 @@
 
 .eyeRight {
   transform-box: view-box;
-  transform-origin: 884.45px 510.33px;
+  transform-origin: 944.69px 441.18px;
   animation: eyeRightGlance 3.2s ease-in-out infinite;
 }
 
@@ -139,21 +138,42 @@
   }
 }
 
+/* Smile path — subtle horizontal scale like Researcher mouth */
 .mouth {
   transform-box: view-box;
-  transform-origin: 877px 665px;
-  animation: mouthDrift 3.2s ease-in-out infinite;
+  transform-origin: 870px 638px;
+  animation: mouthThink 3.2s ease-in-out infinite;
 }
 
-@keyframes mouthDrift {
+@keyframes mouthThink {
   0%,
   100% {
-    transform: translateX(0);
+    transform: scaleX(1);
   }
   30% {
-    transform: translateX(-4px);
+    transform: scaleX(0.84);
   }
-  65% {
-    transform: translateX(3px);
+  60% {
+    transform: scaleX(1.1);
+  }
+}
+
+/* Viewfinder + transport + pencil — gentle “framing” tilt */
+.viewfinder {
+  transform-box: view-box;
+  transform-origin: 520px 520px;
+  animation: viewfinderNudge 5.5s ease-in-out infinite;
+}
+
+@keyframes viewfinderNudge {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(1.1deg);
+  }
+  70% {
+    transform: rotate(-0.6deg);
   }
 }

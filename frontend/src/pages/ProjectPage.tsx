@@ -8,6 +8,8 @@ import type { CoverLogoConfig } from '../utils/coverLogo'
 import { coverLogoHasLetters, lerpGradientColor, rgbToRgba } from '../utils/coverLogo'
 import StrategistIdle from '../components/StrategistIdle'
 import ResearcherIdle from '../components/ResearcherIdle'
+import DirectorIdle from '../components/DirectorIdle'
+import PresenterIdle from '../components/PresenterIdle'
 import styles from './ProjectPage.module.css'
 
 interface Project {
@@ -135,18 +137,21 @@ const AGENT_CONFIG: Record<AgentKey, AgentConfig> = {
   },
 }
 
-/** Static agent mark shown beside the latest assistant reply (and extracted to avoid duplicating SVG). */
-function AgentAvatarFace() {
-  return (
-    <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
-      <path fill="none" d="M476.24,215.84c25.14-23.32,60.06-32.6,93.4-24.82,32.53,7.58,59.46,30.62,72.04,61.62" stroke="#111" strokeWidth="33" strokeLinecap="round"/>
-      <line x1="752.84" y1="230" x2="914.09" y2="135" stroke="#111" strokeWidth="33" strokeLinecap="round"/>
-      <circle fill="#111" cx="651.01" cy="351.83" r="46.59"/>
-      <circle fill="#111" cx="803.71" cy="351.13" r="46.59"/>
-      <path fill="#111" d="M846.08,623.11h-109.75c-9.1,0-16.48-7.38-16.48-16.48s7.38-16.48,16.48-16.48h109.75c9.1,0,16.48,7.38,16.48,16.48s-7.38,16.48-16.48,16.48Z"/>
-    </svg>
-  )
+type AgentIdleMode = 'full' | 'compact'
+
+/** `full` = empty-state hero only. `compact` = character-only square crop (typing row + thread avatar). */
+function AgentCharacterIdle({ agent, mode = 'full' }: { agent: AgentKey; mode?: AgentIdleMode }) {
+  const variant = mode === 'compact' ? 'loading' : 'full'
+  switch (agent) {
+    case 'strategy':
+      return <StrategistIdle variant={variant} />
+    case 'research':
+      return <ResearcherIdle variant={variant} />
+    case 'concept':
+      return <DirectorIdle variant={variant} />
+    case 'present':
+      return <PresenterIdle variant={variant} />
+  }
 }
 
 export default function ProjectPage() {
@@ -647,6 +652,63 @@ export default function ProjectPage() {
     }
   }
 
+  const renderComposer = (variant: 'idle' | 'thread') => {
+    const idle = variant === 'idle'
+    return (
+      <div className={idle ? `${styles.chatInputWrap} ${styles.chatInputWrapUnderHero}` : styles.chatInputWrap}>
+        <div
+          className={`${styles.chatInputBar} ${chatInputDragOver ? styles.chatInputBarDragOver : ''} ${idle ? styles.chatInputBarHero : ''}`}
+          onDrop={handleChatInputDrop}
+          onDragOver={handleChatInputDragOver}
+          onDragLeave={handleChatInputDragLeave}
+        >
+          {droppedImage && (
+            <div className={styles.imagePreviewRow}>
+              <div className={styles.imagePreviewWrap}>
+                <img src={droppedImage.src} alt={droppedImage.name} className={styles.imagePreview} />
+                <button
+                  className={styles.imagePreviewRemove}
+                  onClick={() => setDroppedImage(null)}
+                  aria-label="Remove image"
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M1 1l8 8M9 1L1 9" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+          {chatInputDragOver && !droppedImage && (
+            <div className={styles.chatDropHint}>Drop image here</div>
+          )}
+          <div className={styles.chatInputRow}>
+            <textarea
+              ref={chatInputRef}
+              className={styles.chatInput}
+              placeholder={droppedImage ? 'Add a message (optional)…' : 'Ask anything'}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={chatLoading}
+              rows={1}
+              aria-label="Chat message"
+            />
+            <button
+              className={styles.sendBtn}
+              onClick={handleSend}
+              disabled={chatLoading || (!input.trim() && !droppedImage)}
+              aria-label="Send"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 17V3M10 3L4 9M10 3L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.layout}>
       {/* Top bar */}
@@ -827,13 +889,18 @@ export default function ProjectPage() {
         <main className={styles.chatPanel}>
           <div className={styles.chatScroll}>
             <div className={styles.chatMessages}>
-            {messages.length === 0 && (
-              <div className={styles.chatEmptyState}>
-                {currentAgent === 'strategy' && <StrategistIdle />}
-                {currentAgent === 'research' && <ResearcherIdle />}
+            {messages.length === 0 ? (
+              <div className={styles.chatIdleStack}>
+                <div className={styles.chatIdleArt}>
+                  {currentAgent === 'strategy' && <StrategistIdle />}
+                  {currentAgent === 'research' && <ResearcherIdle />}
+                  {currentAgent === 'concept' && <DirectorIdle />}
+                  {currentAgent === 'present' && <PresenterIdle />}
+                </div>
+                {renderComposer('idle')}
               </div>
-            )}
-            {messages.map((msg, i) => (
+            ) : (
+            messages.map((msg, i) => (
               <div
                 key={i}
                 className={`${styles.chatMessageRow} ${msg.role === 'user' ? styles.chatMessageRowUser : styles.chatMessageRowAssistant}`}
@@ -843,7 +910,9 @@ export default function ProjectPage() {
                   <div
                     className={`${styles.agentAvatar} ${i === lastAssistantIndex && !chatLoading ? '' : styles.agentAvatarHidden}`}
                   >
-                    <AgentAvatarFace />
+                    <div className={styles.agentAvatarLoadingFace}>
+                      <AgentCharacterIdle agent={currentAgent} mode="compact" />
+                    </div>
                   </div>
                 )}
                 <div className={`${styles.chatMessageGroup} ${msg.role === 'user' ? styles.chatMessageGroupUser : styles.chatMessageGroupAssistant}`}>
@@ -885,20 +954,16 @@ export default function ProjectPage() {
                     ))}
                 </div>
               </div>
-            ))}
-            {chatLoading && (
+            ))
+            )}
+            {messages.length > 0 && chatLoading && (
               <div
                 className={`${styles.chatMessageRow} ${styles.chatMessageRowAssistant} ${styles.chatMessageRowTyping}`}
               >
                 <div className={styles.agentAvatar}>
-                  <svg className={styles.chatLoadingSvg} viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <polygon fill="var(--accent, #93ccff)" points="7.52 17.08 715.2 17.08 1069.04 555.88 361.36 1062.51 715.2 1062.51 7.52 17.08"/>
-                    <path className={styles.loadingBrowArc} fill="none" d="M476.24,215.84c25.14-23.32,60.06-32.6,93.4-24.82,32.53,7.58,59.46,30.62,72.04,61.62" stroke="#111" strokeWidth="33" strokeLinecap="round" style={{ transformOrigin: '575px 225px' }}/>
-                    <line className={styles.loadingBrowTick} x1="752.84" y1="230" x2="914.09" y2="135" stroke="#111" strokeWidth="33" strokeLinecap="round" style={{ transformOrigin: '833px 183px' }}/>
-                    <g className={styles.loadingEyeLeft}><circle fill="#111" cx="651.01" cy="351.83" r="46.59"/></g>
-                    <g className={styles.loadingEyeRight}><circle fill="#111" cx="803.71" cy="351.13" r="46.59"/></g>
-                    <path fill="#111" d="M846.08,623.11h-109.75c-9.1,0-16.48-7.38-16.48-16.48s7.38-16.48,16.48-16.48h109.75c9.1,0,16.48,7.38,16.48,16.48s-7.38,16.48-16.48,16.48Z"/>
-                  </svg>
+                  <div className={styles.agentAvatarLoadingFace}>
+                    <AgentCharacterIdle agent={currentAgent} mode="compact" />
+                  </div>
                 </div>
                 <div className={styles.chatLoading}>
                   <div className={styles.chatLoadingDots}>
@@ -911,58 +976,7 @@ export default function ProjectPage() {
             </div>
           </div>
 
-          {/* Chat input — wrapped to match .chatMessages content width (incl. side padding) */}
-          <div className={styles.chatInputWrap}>
-            <div
-              className={`${styles.chatInputBar} ${chatInputDragOver ? styles.chatInputBarDragOver : ''}`}
-              onDrop={handleChatInputDrop}
-              onDragOver={handleChatInputDragOver}
-              onDragLeave={handleChatInputDragLeave}
-            >
-            {droppedImage && (
-              <div className={styles.imagePreviewRow}>
-                <div className={styles.imagePreviewWrap}>
-                  <img src={droppedImage.src} alt={droppedImage.name} className={styles.imagePreview} />
-                  <button
-                    className={styles.imagePreviewRemove}
-                    onClick={() => setDroppedImage(null)}
-                    aria-label="Remove image"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M1 1l8 8M9 1L1 9" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
-            {chatInputDragOver && !droppedImage && (
-              <div className={styles.chatDropHint}>Drop image here</div>
-            )}
-            <div className={styles.chatInputRow}>
-              <textarea
-                ref={chatInputRef}
-                className={styles.chatInput}
-                placeholder={droppedImage ? 'Add a message (optional)…' : 'Ask anything'}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={chatLoading}
-                rows={1}
-                aria-label="Chat message"
-              />
-              <button
-                className={styles.sendBtn}
-                onClick={handleSend}
-                disabled={chatLoading || (!input.trim() && !droppedImage)}
-                aria-label="Send"
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 17V3M10 3L4 9M10 3L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          </div>
+          {messages.length > 0 && renderComposer('thread')}
         </main>
       </div>
     </div>

@@ -470,11 +470,25 @@
   min-width: 0;
 }
 
-.chatEmptyState {
+/* Empty thread: hero + composer stacked in scroll area */
+.chatIdleStack {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: min(36vh, 300px);
+  padding: 12px 0 20px;
+  box-sizing: border-box;
+}
+
+.chatIdleArt {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .chatMessageGroup {
@@ -826,12 +840,22 @@
   max-width: 100%;
 }
 
-.chatLoadingSvg {
-  width: 44px;
-  height: 44px;
-  display: block;
-  overflow: visible;
-  flex-shrink: 0;
+/* Fills circular avatar while idle hero scales down (wide viewBox → letterboxed in square) */
+.agentAvatarLoadingFace {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agentAvatarLoadingFace > * {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  line-height: 0;
 }
 
 .chatLoadingDots {
@@ -856,82 +880,6 @@
   40%            { transform: scale(1);   opacity: 1;   }
 }
 
-/* Reuse the same keyframes from StrategistIdle */
-@keyframes browArcDraw {
-  0%   { stroke-dashoffset: 220;  }
-  28%  { stroke-dashoffset: 0;    }
-  62%  { stroke-dashoffset: 0;    }
-  88%  { stroke-dashoffset: -220; }
-  99%  { stroke-dashoffset: -220; }
-  100% { stroke-dashoffset: 220;  }
-}
-
-@keyframes browTickDraw {
-  0%   { stroke-dashoffset: -190; }
-  8%   { stroke-dashoffset: -190; }
-  34%  { stroke-dashoffset: 0;    }
-  62%  { stroke-dashoffset: 0;    }
-  90%  { stroke-dashoffset: 190;  }
-  99%  { stroke-dashoffset: 190;  }
-  100% { stroke-dashoffset: -190; }
-}
-
-.loadingBrowArc {
-  stroke-dasharray: 220;
-  stroke-dashoffset: 220;
-  animation:
-    browArcDraw   2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite,
-    loadingBrowArcRotate 2.8s ease-in-out infinite;
-}
-
-@keyframes loadingBrowArcRotate {
-  0%   { transform: rotate(0deg);   }
-  30%  { transform: rotate(-8deg);  }
-  60%  { transform: rotate(-14deg); }
-  80%  { transform: rotate(-6deg);  }
-  100% { transform: rotate(0deg);   }
-}
-
-.loadingBrowTick {
-  stroke-dasharray: 190;
-  stroke-dashoffset: -190;
-  animation:
-    browTickDraw   2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite,
-    loadingBrowTickRotate 2.8s ease-in-out infinite;
-}
-
-@keyframes loadingBrowTickRotate {
-  0%   { transform: rotate(0deg);  }
-  20%  { transform: rotate(12deg); }
-  50%  { transform: rotate(5deg);  }
-  75%  { transform: rotate(18deg); }
-  100% { transform: rotate(0deg);  }
-}
-
-.loadingEyeLeft {
-  fill: #111010;
-  animation: loadingEyeLeftGlance 3.2s ease-in-out infinite;
-}
-
-@keyframes loadingEyeLeftGlance {
-  0%   { transform: translate(0px,   0px); }
-  40%  { transform: translate(0px,   0px); }
-  65%  { transform: translate(-14px, 0px); }
-  100% { transform: translate(0px,   0px); }
-}
-
-.loadingEyeRight {
-  fill: #111010;
-  animation: loadingEyeRightGlance 3.2s ease-in-out infinite;
-}
-
-@keyframes loadingEyeRightGlance {
-  0%   { transform: translate(0px,  0px);  }
-  40%  { transform: translate(0px,  0px);  }
-  65%  { transform: translate(22px, 18px); }
-  100% { transform: translate(0px,  0px);  }
-}
-
 /* Same outer width + side padding as .chatMessages — child bar fills content area */
 .chatInputWrap {
   flex-shrink: 0;
@@ -941,6 +889,21 @@
   box-sizing: border-box;
   padding: 0 var(--chat-column-padding-inline);
   margin: 8px 0 16px;
+}
+
+/* Full width of .chatMessages content (same footprint as thread composer below) */
+.chatInputWrap.chatInputWrapUnderHero {
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.chatInputWrapUnderHero .chatInputBar {
+  margin-top: 6px;
+  margin-bottom: 8px;
 }
 
 /* ── Chat input bar ── */
@@ -962,6 +925,34 @@
 }
 
 .chatInputBarDragOver {
+  box-shadow: 0 0 0 2px var(--color-accent-blue);
+  background-color: #eaf6ff;
+}
+
+/* Empty thread — wide bar like reference (~full chat column), pill + light border */
+.chatInputBarHero {
+  border-radius: 999px;
+  min-height: 64px;
+  padding: 12px 14px 12px 22px;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent, #93ccff) 38%, white);
+  box-shadow:
+    0 8px 22px color-mix(in srgb, var(--accent, #93ccff) 12%, transparent),
+    0 1px 4px rgba(0, 0, 0, 0.04);
+  background-color: color-mix(in srgb, var(--accent, #a3eeff) 24%, white);
+}
+
+.chatInputWrapUnderHero .chatInput {
+  font-size: 18px;
+  max-height: 200px;
+}
+
+.chatInputWrapUnderHero .sendBtn {
+  width: 44px;
+  height: 44px;
+}
+
+.chatInputBarDragOver.chatInputBarHero {
   box-shadow: 0 0 0 2px var(--color-accent-blue);
   background-color: #eaf6ff;
 }

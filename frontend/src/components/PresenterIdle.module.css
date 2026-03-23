@@ -1,0 +1,230 @@
+.root {
+  animation: fadeIn 0.6s ease both;
+  width: 100%;
+  max-width: min(365px, 88vw);
+  margin: 0 auto;
+}
+
+.rootLoading {
+  animation: none;
+  max-width: none;
+  margin: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.art {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.body {
+  fill: var(--accent, #93ccff);
+}
+
+.letter {
+  fill: color-mix(in srgb, var(--accent, #93ccff) 84%, white);
+}
+
+.rule {
+  fill: color-mix(in srgb, var(--accent, #93ccff) 84%, white);
+}
+
+.accentMark {
+  fill: var(--accent, #93ccff);
+}
+
+.characterGroup {
+  transform-box: view-box;
+  transform-origin: 32% 54%;
+  animation: floatChar 4s ease-in-out infinite;
+}
+
+@keyframes floatChar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-11px);
+  }
+}
+
+.browLeft {
+  transform-box: view-box;
+  transform-origin: 560px 498px;
+  animation: browLeftTilt 3.6s ease-in-out infinite;
+}
+
+.browRight {
+  transform-box: view-box;
+  transform-origin: 780px 488px;
+  animation: browRightTilt 3.4s ease-in-out infinite;
+}
+
+@keyframes browLeftTilt {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(-8deg);
+  }
+  70% {
+    transform: rotate(-2.5deg);
+  }
+}
+
+@keyframes browRightTilt {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(9.5deg);
+  }
+  65% {
+    transform: rotate(4.5deg);
+  }
+}
+
+.eyeLeft {
+  transform-box: view-box;
+  transform-origin: 615.15px 551.32px;
+  animation: eyeLeftGlance 3.2s ease-in-out infinite;
+}
+
+@keyframes eyeLeftGlance {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  42% {
+    transform: translate(-17px, 9px);
+  }
+  78% {
+    transform: translate(7px, 1px);
+  }
+}
+
+.eyeRight {
+  transform-box: view-box;
+  transform-origin: 728.27px 544.92px;
+  animation: eyeRightGlance 3.2s ease-in-out infinite;
+}
+
+@keyframes eyeRightGlance {
+  0%,
+  100% {
+    transform: translate(5px, -4px);
+  }
+  42% {
+    transform: translate(-10px, 6px);
+  }
+  78% {
+    transform: translate(13px, -6px);
+  }
+}
+
+.mouth {
+  transform-box: view-box;
+  transform-origin: 735px 758px;
+  animation: mouthThink 3.2s ease-in-out infinite;
+}
+
+@keyframes mouthThink {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  30% {
+    transform: scaleX(0.84);
+  }
+  60% {
+    transform: scaleX(1.09);
+  }
+}
+
+.micArm {
+  transform-box: view-box;
+  transform-origin: 812px 702px;
+  animation: micSway 3.8s ease-in-out infinite;
+}
+
+@keyframes micSway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(-3.5deg);
+  }
+  68% {
+    transform: rotate(2.1deg);
+  }
+}
+
+.magGlass {
+  transform-box: view-box;
+  transform-origin: 284px 618px;
+  animation: propDriftLeft 5.2s ease-in-out infinite;
+}
+
+@keyframes propDriftLeft {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  45% {
+    transform: rotate(1.5deg) translateY(-5px);
+  }
+  72% {
+    transform: rotate(-0.65deg) translateY(3px);
+  }
+}
+
+.thoughtBubble {
+  transform-box: view-box;
+  transform-origin: 1110px 480px;
+  animation: propDriftRight 5.4s ease-in-out infinite;
+}
+
+@keyframes propDriftRight {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  42% {
+    transform: rotate(-1.25deg) translateY(-4px);
+  }
+  70% {
+    transform: rotate(0.75deg) translateY(3px);
+  }
+}
+
+.sparkle {
+  transform-box: view-box;
+  transform-origin: 458px 248px;
+  animation: sparkleNudge 4.2s ease-in-out infinite;
+}
+
+@keyframes sparkleNudge {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3.2deg);
+  }
+}
