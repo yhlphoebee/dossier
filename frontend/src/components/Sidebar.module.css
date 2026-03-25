@@ -246,7 +246,7 @@
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background-color: #555;
+  background-color: #cdebf2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -256,7 +256,7 @@
 .avatarInitials {
   font-family: var(--font-display);
   font-size: 16px;
-  color: var(--color-text-primary);
+  color: var(--color-black);
   font-weight: 400;
 }
 

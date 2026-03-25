@@ -83,7 +83,7 @@ export default function ProjectCoverMark({ title, gradientT, layoutSeed, classNa
                   y={y}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="30"
+                  fontSize="38"
                   fontFamily="'Neue Haas Grotesk Display Pro','NeueHaasDisplayRoman','Helvetica Neue',Helvetica,Arial,sans-serif"
                   fontWeight="400"
                   fill={DOT_COLOR}

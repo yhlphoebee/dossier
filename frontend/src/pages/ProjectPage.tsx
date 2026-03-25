@@ -793,18 +793,12 @@ export default function ProjectPage() {
             {/* Summary / core statement block */}
             <div className={styles.sectionBlock}>
               <span className={styles.sectionLabel}>{AGENT_CONFIG[currentAgent].summaryLabel}</span>
-              {currentAgent === 'concept' && (
-                <span className={styles.sectionHint}>→ "Elements connect through directional flow to represent pairing"</span>
-              )}
               {currentAgent === 'present' && (
                 <span className={styles.sectionHint}>→ (1 sentence)</span>
               )}
-              <textarea
-                className={styles.statementInput}
-                placeholder={AGENT_CONFIG[currentAgent].summaryPlaceholder}
-                value={localSummary}
-                onChange={(e) => setLocalSummary(e.target.value)}
-              />
+              <p className={`${styles.sectionText} ${styles.sectionTextStatement}${!localSummary ? ` ${styles.sectionTextEmpty}` : ''}`}>
+                {localSummary || AGENT_CONFIG[currentAgent].summaryPlaceholder}
+              </p>
             </div>
 
             <div className={styles.cardDivider} />
@@ -812,12 +806,9 @@ export default function ProjectPage() {
             {/* Field 2 — always open */}
             <div className={styles.sectionBlock}>
               <span className={styles.sectionLabel}>{AGENT_CONFIG[currentAgent].field2Label}</span>
-              <textarea
-                className={styles.sectionTextarea}
-                placeholder={AGENT_CONFIG[currentAgent].field2Placeholder}
-                value={localProblem}
-                onChange={(e) => setLocalProblem(e.target.value)}
-              />
+              <p className={`${styles.sectionText}${!localProblem ? ` ${styles.sectionTextEmpty}` : ''}`}>
+                {localProblem || AGENT_CONFIG[currentAgent].field2Placeholder}
+              </p>
             </div>
 
             <div className={styles.cardDivider} />
@@ -825,12 +816,9 @@ export default function ProjectPage() {
             {/* Field 3 — always open */}
             <div className={styles.sectionBlock}>
               <span className={styles.sectionLabel}>{AGENT_CONFIG[currentAgent].field3Label}</span>
-              <textarea
-                className={styles.sectionTextarea}
-                placeholder={AGENT_CONFIG[currentAgent].field3Placeholder}
-                value={localAssumptions}
-                onChange={(e) => setLocalAssumptions(e.target.value)}
-              />
+              <p className={`${styles.sectionText}${!localAssumptions ? ` ${styles.sectionTextEmpty}` : ''}`}>
+                {localAssumptions || AGENT_CONFIG[currentAgent].field3Placeholder}
+              </p>
             </div>
           </div>
 

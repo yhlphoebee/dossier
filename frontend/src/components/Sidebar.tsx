@@ -137,9 +137,9 @@ export default function Sidebar({ searchQuery, onSearchChange, filters, onToggle
       <div className={styles.footer}>
         <div className={styles.footerLeft}>
           <div className={styles.avatar}>
-            <span className={styles.avatarInitials}>LC</span>
+            <span className={styles.avatarInitials}>EA</span>
           </div>
-          <span className={styles.userName}>Lauren Chen</span>
+          <span className={styles.userName}>Emily Anderson</span>
         </div>
         <button
           className={styles.footerLogoBtn}
