@@ -657,7 +657,7 @@ export default function ProjectPage() {
     return (
       <div className={idle ? `${styles.chatInputWrap} ${styles.chatInputWrapUnderHero}` : styles.chatInputWrap}>
         <div
-          className={`${styles.chatInputBar} ${chatInputDragOver ? styles.chatInputBarDragOver : ''} ${idle ? styles.chatInputBarHero : ''}`}
+          className={`${styles.chatInputBar} ${chatInputDragOver ? styles.chatInputBarDragOver : ''} ${idle ? styles.chatInputBarHero : ''} ${idle && input.trim() ? styles.chatInputBarHeroExpanded : ''}`}
           onDrop={handleChatInputDrop}
           onDragOver={handleChatInputDragOver}
           onDragLeave={handleChatInputDragLeave}
