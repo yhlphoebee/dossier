@@ -874,7 +874,7 @@ export default function ProjectPage() {
         </aside>
 
         {/* ── Right panel: AI Chat ── */}
-        <main className={styles.chatPanel}>
+        <main className={`${styles.chatPanel} ${dossiBoardExpanded ? styles.chatPanelNarrow : ''}`}>
           <div className={styles.chatScroll}>
             <div className={styles.chatMessages}>
             {messages.length === 0 ? (

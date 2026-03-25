@@ -473,6 +473,12 @@
   position: relative;
 }
 
+/* When DossiBoard is expanded the chat panel is narrow — use full width + minimal padding */
+.chatPanelNarrow {
+  --chat-column-fraction: 100%;
+  --chat-column-padding-inline: clamp(8px, 1.5vw, 16px);
+}
+
 /* Full-width scrollport so the scrollbar sits on the right edge of the chat panel (viewport edge) */
 .chatScroll {
   flex: 1;
